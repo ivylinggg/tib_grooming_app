@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "327434489432",
+    "project_id": "tib-grooming",
+    "storage_bucket": "tib-grooming.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:327434489432:android:50237f2f2055624103842d",
+        "android_client_info": {
+          "package_name": "com.example.tib_grooming_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUg3ePd9vN2l9L1HWFhUOEl8Fm3apczqE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,55 @@
+name: tib_grooming_app
+description: Batik Air Grooming Assessment
+
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.11.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  google_fonts: ^8.2.0
+  flutter_svg: ^2.3.0
+
+  # Network
+  http: ^1.6.0
+
+  # Local Storage
+  shared_preferences: ^2.5.5
+
+  # Camera
+  camera: ^0.11.0+2
+  image_picker: ^1.2.3
+
+  # AI
+  google_mlkit_face_detection: ^0.13.1
+
+  # PDF
+  pdf: ^3.11.0
+  printing: ^5.14.0
+
+  # Share
+  share_plus: ^10.0.2
+  url_launcher: ^6.3.1
+
+  # Firebase
+  firebase_core: ^4.12.1
+  cloud_firestore: ^6.7.1
+  firebase_storage: ^13.0.2
+
+  # Charts
+  fl_chart: ^0.69.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

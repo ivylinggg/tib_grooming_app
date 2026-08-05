@@ -1,0 +1,174 @@
+import 'dart:io';
+
+import 'package:camera/camera.dart';
+import 'package:flutter/material.dart';
+import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
+
+import '../assessment_screen.dart';
+
+class AIAssessmentScreen extends StatefulWidget {
+  final String participantId;
+  final String participantName;
+
+  const AIAssessmentScreen({
+    super.key,
+    required this.participantId,
+    required this.participantName,
+  });
+
+  @override
+  State<AIAssessmentScreen> createState() => _AIAssessmentScreenState();
+}
+
+class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
+  CameraController? controller;
+
+  File? capturedImage;
+
+  bool isLoading = true;
+  bool detecting = false;
+
+  final FaceDetector faceDetector = FaceDetector(
+    options: FaceDetectorOptions(
+      enableContours: true,
+      enableClassification: true,
+      performanceMode: FaceDetectorMode.accurate,
+    ),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    initializeCamera();
+  }
+
+  Future<void> initializeCamera() async {
+    final cameras = await availableCameras();
+
+    controller = CameraController(
+      cameras.first,
+      ResolutionPreset.high,
+      enableAudio: false,
+    );
+
+    await controller!.initialize();
+
+    if (!mounted) return;
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  Future<void> detectFace() async {
+    if (controller == null) return;
+
+    if (detecting) return;
+
+    detecting = true;
+
+    final picture = await controller!.takePicture();
+
+    capturedImage = File(picture.path);
+
+    final image = InputImage.fromFile(capturedImage!);
+
+    final faces = await faceDetector.processImage(image);
+
+    if (!mounted) return;
+
+    detecting = false;
+
+    if (faces.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("No face detected.")));
+      return;
+    }
+
+    final face = faces.first;
+
+    bool facingFront = true;
+
+    if (face.headEulerAngleY != null) {
+      facingFront = face.headEulerAngleY!.abs() < 15;
+    }
+
+    bool eyesOpen = true;
+
+    if (face.leftEyeOpenProbability != null &&
+        face.rightEyeOpenProbability != null) {
+      eyesOpen =
+          face.leftEyeOpenProbability! > 0.5 &&
+          face.rightEyeOpenProbability! > 0.5;
+    }
+
+    if (!facingFront) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please face the camera.")));
+      return;
+    }
+
+    if (!eyesOpen) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please keep your eyes open.")),
+      );
+      return;
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AssessmentScreen(
+          participantId: widget.participantId,
+          participantName: widget.participantName,
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    controller?.dispose();
+    faceDetector.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("AI Grooming Detection"),
+        backgroundColor: const Color(0xFF1F3D73),
+        foregroundColor: Colors.white,
+      ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                Expanded(child: CameraPreview(controller!)),
+
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1F3D73),
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 55),
+                    ),
+                    icon: const Icon(Icons.camera_alt),
+                    label: const Text("Capture"),
+                    onPressed: detecting
+                        ? null
+                        : () async {
+                            await detectFace();
+                          },
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+}
