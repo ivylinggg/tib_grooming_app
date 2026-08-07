@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../assessment/assessment_history_screen.dart';
 import 'participant_management_screen.dart';
 import '../register/register_screen.dart';
+import '../assessment/assessment_list_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -207,18 +207,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               _DashboardButton(
                 icon: Icons.history,
-                title: "Assessment History",
-                subtitle: "View previous grooming assessments",
+                title: "Assessment List",
+                subtitle: "Browse participant assessment records",
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const AssessmentHistoryScreen(),
+                      builder: (_) => const AssessmentListScreen(),
                     ),
                   );
                 },
               ),
-
               _DashboardButton(
                 icon: Icons.bar_chart,
                 title: "Statistics",
@@ -253,7 +252,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         actions: [
                           TextButton(
                             onPressed: () {
-                              Navigator.pushAndRemoveUntil;
+                              Navigator.pop(context);
                             },
                             child: const Text("Close"),
                           ),

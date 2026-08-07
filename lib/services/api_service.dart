@@ -8,8 +8,7 @@ class ApiService {
   ApiService();
 
   static const String baseUrl =
-      "https://script.google.com/macros/s/AKfycbzlAKRrgZxcZMXVbzBohhDIcsrJg3blExF0Lfm6cJ4VQbQIW4RoFCI4gUBYqBkh4wiU/exec";
-
+      "https://script.google.com/macros/s/AKfycbyY0BD9jUibD1pvIZmtIxaB38gAurDMQRcBCDffqoeVB_fReRcbEgcb_Tx7BEaDlmyFNg/exec";
   Future<AssessmentResult> analyzeImage({
     required String referenceB64,
     required String referenceMime,

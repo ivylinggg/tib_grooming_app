@@ -36,7 +36,7 @@ class _CheckInCardState extends State<CheckInCard> {
   }
 
   Future<void> _findProfile() async {
-    final staffId = staffIdController.text.trim().toUpperCase();
+    final staffId = staffIdController.text.trim();
 
     if (staffId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(

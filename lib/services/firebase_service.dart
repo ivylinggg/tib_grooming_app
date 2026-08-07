@@ -1,43 +1,24 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
+
+import '../api/google_drive_api.dart';
 
 class FirebaseService {
   FirebaseService();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  /// Upload image to Firebase Storage
+  /// Upload Reference Photo
   Future<String?> uploadPhoto({
     required String staff,
     required File image,
   }) async {
-    try {
-      final ref = _storage.ref().child("participants/$staff/reference.jpg");
-
-      final uploadTask = await ref.putFile(image);
-
-      if (uploadTask.state == TaskState.success) {
-        final url = await ref.getDownloadURL();
-
-        debugPrint("========== STORAGE ==========");
-        debugPrint("Upload Success");
-        debugPrint(url);
-        debugPrint("=============================");
-
-        return url;
-      }
-
-      return null;
-    } catch (e) {
-      debugPrint("Firebase Storage Error:");
-      debugPrint(e.toString());
-
-      return null;
-    }
+    return await GoogleDriveApi.uploadImage(
+      image: image,
+      fileName: "${staff}_reference.jpg",
+    );
   }
 
   /// Register Participant
@@ -57,12 +38,10 @@ class FirebaseService {
         return false;
       }
 
-      debugPrint("========== FIREBASE ==========");
-      debugPrint("Uploading Photo...");
+      debugPrint("========== GOOGLE DRIVE ==========");
 
       final photoUrl = await uploadPhoto(staff: staff, image: referencePhoto);
 
-      debugPrint("Photo URL:");
       debugPrint(photoUrl);
 
       await participantRef.set({
@@ -74,13 +53,12 @@ class FirebaseService {
         "createdAt": FieldValue.serverTimestamp(),
       });
 
-      debugPrint("Firestore Saved");
+      debugPrint("Participant Registered");
 
       return true;
     } catch (e) {
-      debugPrint("Register Error:");
+      debugPrint("Register Error");
       debugPrint(e.toString());
-
       return false;
     }
   }
@@ -92,14 +70,12 @@ class FirebaseService {
 
       return doc.exists;
     } catch (e) {
-      debugPrint("Participant Exists Error:");
       debugPrint(e.toString());
-
       return false;
     }
   }
 
-  /// Get one participant
+  /// Get participant
   Future<Map<String, dynamic>?> getParticipant(String staff) async {
     try {
       final doc = await _firestore.collection("participants").doc(staff).get();
@@ -112,9 +88,7 @@ class FirebaseService {
 
       return {...data, "id": doc.id};
     } catch (e) {
-      debugPrint("Get Participant Error:");
       debugPrint(e.toString());
-
       return null;
     }
   }
@@ -129,14 +103,12 @@ class FirebaseService {
 
       return snapshot.docs.map((doc) => {...doc.data(), "id": doc.id}).toList();
     } catch (e) {
-      debugPrint("Get Participants Error:");
       debugPrint(e.toString());
-
       return [];
     }
   }
 
-  /// Realtime participants
+  /// Stream participants
   Stream<QuerySnapshot<Map<String, dynamic>>> streamParticipants() {
     return _firestore
         .collection("participants")
@@ -177,16 +149,13 @@ class FirebaseService {
     try {
       await _firestore.collection("participants").doc(staff).delete();
 
-      // Delete Storage image
-      try {
-        await _storage.ref("participants/$staff/reference.jpg").delete();
-      } catch (_) {}
+      // TODO:
+      // Delete Google Drive image in future.
 
       return true;
     } catch (e) {
-      debugPrint("Delete Error:");
+      debugPrint("Delete Error");
       debugPrint(e.toString());
-
       return false;
     }
   }
@@ -208,14 +177,10 @@ class FirebaseService {
 
             return staff.contains(key) || name.contains(key);
           })
-          .map((doc) {
-            return {...doc.data(), "id": doc.id};
-          })
+          .map((doc) => {...doc.data(), "id": doc.id})
           .toList();
     } catch (e) {
-      debugPrint("Search Error:");
       debugPrint(e.toString());
-
       return [];
     }
   }
@@ -225,45 +190,140 @@ class FirebaseService {
     required String participantId,
     required File image,
   }) async {
-    try {
-      final ref = _storage.ref().child(
-        "assessments/$participantId/${DateTime.now().millisecondsSinceEpoch}.jpg",
-      );
-
-      await ref.putFile(image);
-
-      return await ref.getDownloadURL();
-    } catch (e) {
-      debugPrint("Assessment Upload Error:");
-      debugPrint(e.toString());
-
-      return null;
-    }
+    return await GoogleDriveApi.uploadImage(
+      image: image,
+      fileName: "${participantId}_${DateTime.now().millisecondsSinceEpoch}.jpg",
+    );
   }
 
   /// Save Assessment
-  Future<void> saveAssessment({
+  Future<bool> saveAssessment({
     required String participantId,
     required String participantName,
-    required int score,
-    required String result,
-    required bool hair,
-    required bool uniform,
-    required bool tie,
-    required bool shoes,
-    required bool nameTag,
+
+    required int totalScore,
+    required String overall,
+
+    required String summary,
+    required String suggestion,
+
+    required String referencePhotoUrl,
+    required String todayPhotoUrl,
+
+    required List<Map<String, dynamic>> criteria,
   }) async {
-    await _firestore.collection("assessments").add({
-      "participantId": participantId,
-      "participantName": participantName,
-      "score": score,
-      "result": result,
-      "hair": hair,
-      "uniform": uniform,
-      "tie": tie,
-      "shoes": shoes,
-      "nameTag": nameTag,
-      "createdAt": Timestamp.now(),
-    });
+    try {
+      await _firestore.collection("assessments").add({
+        "participantId": participantId,
+        "participantName": participantName,
+
+        "totalScore": totalScore,
+        "overall": overall,
+
+        "summary": summary,
+        "suggestion": suggestion,
+
+        "referencePhotoUrl": referencePhotoUrl,
+        "todayPhotoUrl": todayPhotoUrl,
+
+        "criteria": criteria,
+
+        "createdAt": Timestamp.now(),
+      });
+
+      final participantRef = _firestore
+          .collection("participants")
+          .doc(participantId);
+
+      final participantDoc = await participantRef.get();
+
+      if (participantDoc.exists) {
+        final data = participantDoc.data()!;
+
+        final currentCount = (data["assessmentCount"] ?? 0) as int;
+
+        await participantRef.update({
+          "latestScore": totalScore,
+          "latestResult": overall,
+          "assessmentCount": currentCount + 1,
+          "lastAssessmentDate": Timestamp.now(),
+        });
+      }
+
+      return true;
+    } catch (e) {
+      debugPrint(e.toString());
+      return false;
+    }
+  }
+
+  /// Assessment History
+  Stream<QuerySnapshot<Map<String, dynamic>>> streamParticipantAssessments(
+    String participantId,
+  ) {
+    return _firestore
+        .collection("assessments")
+        .where("participantId", isEqualTo: participantId)
+        .orderBy("createdAt", descending: true)
+        .snapshots();
+  }
+
+  /// Delete Assessment
+  Future<void> deleteAssessment(String documentId) async {
+    await _firestore.collection("assessments").doc(documentId).delete();
+  }
+
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+  getParticipantAssessments(String participantId) async {
+    final snapshot = await _firestore
+        .collection("assessments")
+        .where("participantId", isEqualTo: participantId)
+        .orderBy("createdAt", descending: true)
+        .get();
+
+    return snapshot.docs;
+  }
+
+  Map<String, dynamic> calculateStatistics(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) {
+    if (docs.isEmpty) {
+      return {
+        "average": 0,
+        "highest": 0,
+        "lowest": 0,
+        "passRate": 0,
+        "total": 0,
+      };
+    }
+
+    int totalScore = 0;
+    int highest = 0;
+    int lowest = 100;
+    int pass = 0;
+
+    for (final doc in docs) {
+      final data = doc.data();
+
+      final score = (data["score"] ?? 0) as int;
+
+      totalScore += score;
+
+      if (score > highest) highest = score;
+
+      if (score < lowest) lowest = score;
+
+      if ((data["result"] ?? "") == "PASS") {
+        pass++;
+      }
+    }
+
+    return {
+      "average": (totalScore / docs.length).toStringAsFixed(1),
+      "highest": highest,
+      "lowest": lowest,
+      "passRate": ((pass / docs.length) * 100).toStringAsFixed(1),
+      "total": docs.length,
+    };
   }
 }

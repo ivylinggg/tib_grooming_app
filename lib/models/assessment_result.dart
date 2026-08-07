@@ -9,6 +9,9 @@ class AssessmentResult {
   /// Claude AI summary
   final String summary;
 
+  /// Claude AI improvement suggestion
+  final String suggestion;
+
   /// Detail Criteria
   final List<AssessmentCriteria> criteria;
 
@@ -42,6 +45,7 @@ class AssessmentResult {
     required this.gender,
     required this.overall,
     required this.summary,
+    required this.suggestion,
     required this.criteria,
     required this.totalScore,
     required this.submissionId,
@@ -62,7 +66,7 @@ class AssessmentResult {
       gender: json['gender']?.toString() ?? '',
       overall: json['overall']?.toString() ?? '',
       summary: json['summary']?.toString() ?? '',
-
+      suggestion: json['suggestion']?.toString() ?? '',
       criteria:
           (json['criteria'] as List<dynamic>?)
               ?.map(
@@ -102,6 +106,7 @@ class AssessmentResult {
       "gender": gender,
       "overall": overall,
       "summary": summary,
+      "suggestion": suggestion,
       "criteria": criteria.map((e) => e.toJson()).toList(),
       "totalScore": totalScore,
       "submissionId": submissionId,
@@ -122,6 +127,7 @@ class AssessmentResult {
     String? gender,
     String? overall,
     String? summary,
+    String? suggestion,
     List<AssessmentCriteria>? criteria,
     int? totalScore,
     String? submissionId,
@@ -140,6 +146,7 @@ class AssessmentResult {
       gender: gender ?? this.gender,
       overall: overall ?? this.overall,
       summary: summary ?? this.summary,
+      suggestion: suggestion ?? this.suggestion,
       criteria: criteria ?? this.criteria,
       totalScore: totalScore ?? this.totalScore,
       submissionId: submissionId ?? this.submissionId,

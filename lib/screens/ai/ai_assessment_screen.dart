@@ -4,6 +4,10 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
+import '../../api/assessment_api.dart';
+import '../../models/assessment_result.dart';
+import '../../services/firebase_service.dart';
+
 import '../assessment_screen.dart';
 
 class AIAssessmentScreen extends StatefulWidget {
@@ -22,6 +26,14 @@ class AIAssessmentScreen extends StatefulWidget {
 
 class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
   CameraController? controller;
+
+  final AssessmentApi assessmentApi = AssessmentApi();
+
+  final FirebaseService firebaseService = FirebaseService();
+
+  AssessmentResult? result;
+
+  bool analyzing = false;
 
   File? capturedImage;
 
@@ -117,16 +129,81 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
       return;
     }
 
+    setState(() {
+      analyzing = true;
+    });
+
+    final participant = await firebaseService.getParticipant(
+      widget.participantId,
+    );
+
+    if (participant == null) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Participant not found.")));
+
+      setState(() {
+        analyzing = false;
+      });
+
+      return;
+    }
+
+    final validPhoto = await assessmentApi.detectPerson(image: capturedImage!);
+
+    if (!validPhoto) {
+      if (!mounted) return;
+
+      setState(() {
+        analyzing = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Colors.red,
+          content: Text("Please upload a full-body standing photo."),
+        ),
+      );
+
+      return;
+    }
+
+    final aiResult = await assessmentApi.analyze(
+      referencePhotoUrl: participant["photoUrl"],
+      todayPhoto: capturedImage!,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      analyzing = false;
+    });
+
+    if (aiResult == null) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("AI assessment failed.")));
+
+      return;
+    }
+
+    if (!mounted) return;
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (_) => AssessmentScreen(
           participantId: widget.participantId,
           participantName: widget.participantName,
+          assessmentResult: aiResult,
         ),
       ),
     );
-  }
+  } // detectFace() 结束
 
   @override
   void dispose() {
@@ -148,7 +225,6 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
           : Column(
               children: [
                 Expanded(child: CameraPreview(controller!)),
-
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),

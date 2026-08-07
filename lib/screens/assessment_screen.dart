@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import '../../models/assessment_result.dart';
 import '../../services/firebase_service.dart';
 
 class AssessmentScreen extends StatefulWidget {
   final String participantId;
   final String participantName;
+  final AssessmentResult assessmentResult;
 
   const AssessmentScreen({
     super.key,
     required this.participantId,
     required this.participantName,
+    required this.assessmentResult,
   });
 
   @override
@@ -17,28 +20,6 @@ class AssessmentScreen extends StatefulWidget {
 
 class _AssessmentScreenState extends State<AssessmentScreen> {
   final FirebaseService firebaseService = FirebaseService();
-
-  bool hair = true;
-  bool uniform = true;
-  bool tie = true;
-  bool shoes = true;
-  bool nameTag = true;
-
-  int calculateScore() {
-    int score = 0;
-
-    if (hair) score += 20;
-    if (uniform) score += 20;
-    if (tie) score += 20;
-    if (shoes) score += 20;
-    if (nameTag) score += 20;
-
-    return score;
-  }
-
-  String getResult() {
-    return calculateScore() >= 80 ? "PASS" : "FAIL";
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,60 +45,88 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
           const SizedBox(height: 20),
 
           const Text(
-            "Assessment Checklist",
+            "AI Assessment Result",
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
 
           const SizedBox(height: 20),
 
-          SwitchListTile(
-            title: const Text("Hair"),
-            value: hair,
-            onChanged: (value) {
-              setState(() {
-                hair = value;
-              });
-            },
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.verified),
+              title: const Text("Overall"),
+              subtitle: Text(widget.assessmentResult.overall),
+            ),
           ),
 
-          SwitchListTile(
-            title: const Text("Uniform"),
-            value: uniform,
-            onChanged: (value) {
-              setState(() {
-                uniform = value;
-              });
-            },
+          const SizedBox(height: 10),
+
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.score),
+              title: const Text("Total Score"),
+              subtitle: Text("${widget.assessmentResult.totalScore} / 100"),
+            ),
           ),
 
-          SwitchListTile(
-            title: const Text("Tie / Scarf"),
-            value: tie,
-            onChanged: (value) {
-              setState(() {
-                tie = value;
-              });
-            },
+          const SizedBox(height: 10),
+
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.description),
+              title: const Text("Summary"),
+              subtitle: Text(widget.assessmentResult.summary),
+            ),
           ),
 
-          SwitchListTile(
-            title: const Text("Shoes"),
-            value: shoes,
-            onChanged: (value) {
-              setState(() {
-                shoes = value;
-              });
-            },
+          const SizedBox(height: 10),
+
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.tips_and_updates),
+              title: const Text("Suggestion"),
+              subtitle: Text(widget.assessmentResult.suggestion),
+            ),
           ),
 
-          SwitchListTile(
-            title: const Text("Name Tag"),
-            value: nameTag,
-            onChanged: (value) {
-              setState(() {
-                nameTag = value;
-              });
-            },
+          const SizedBox(height: 20),
+
+          const Text(
+            "Assessment Details",
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+
+          const SizedBox(height: 10),
+
+          ...widget.assessmentResult.criteria.map(
+            (item) => Card(
+              child: ListTile(
+                leading: const Icon(Icons.check_circle_outline),
+
+                title: Text(item.label),
+
+                subtitle: Text(item.tip),
+
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: item.score >= 8
+                        ? Colors.green.shade100
+                        : item.score >= 5
+                        ? Colors.orange.shade100
+                        : Colors.red.shade100,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    "${item.score}/10",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ),
           ),
 
           const SizedBox(height: 30),
@@ -129,30 +138,49 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
               minimumSize: const Size(double.infinity, 55),
             ),
             onPressed: () async {
-              final score = calculateScore();
-              final result = getResult();
+              final score = widget.assessmentResult.totalScore;
+              final result = widget.assessmentResult.overall;
 
               final navigator = Navigator.of(context);
+              final messenger = ScaffoldMessenger.of(context);
 
-              await firebaseService.saveAssessment(
+              final success = await firebaseService.saveAssessment(
                 participantId: widget.participantId,
                 participantName: widget.participantName,
-                score: score,
-                result: result,
-                hair: hair,
-                uniform: uniform,
-                tie: tie,
-                shoes: shoes,
-                nameTag: nameTag,
+
+                totalScore: score,
+                overall: result,
+
+                summary: widget.assessmentResult.summary,
+                suggestion: widget.assessmentResult.suggestion,
+                referencePhotoUrl:
+                    widget.assessmentResult.referencePhotoUrl ?? "",
+                todayPhotoUrl: widget.assessmentResult.todayPhotoUrl ?? "",
+
+                criteria: widget.assessmentResult.criteria
+                    .map(
+                      (e) => {"label": e.label, "score": e.score, "tip": e.tip},
+                    )
+                    .toList(),
               );
 
               if (!mounted) return;
+
+              if (!success) {
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text("Failed to save assessment."),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
 
               showDialog(
                 context: navigator.context,
                 builder: (_) {
                   return AlertDialog(
-                    title: const Text("Assessment Saved"),
+                    title: const Text("AI Assessment Completed"),
                     content: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -163,23 +191,41 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
 
                         const SizedBox(height: 15),
 
-                        Text(
-                          "Score : $score%",
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        Column(
+                          children: [
+                            const Text(
+                              "Overall",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
 
-                        const SizedBox(height: 15),
+                            const SizedBox(height: 8),
 
-                        Text(
-                          result,
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: result == "PASS" ? Colors.green : Colors.red,
-                          ),
+                            Text(
+                              result,
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                              ),
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            const Text(
+                              "Total Score",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+
+                            const SizedBox(height: 8),
+
+                            Text(
+                              "$score / 100",
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
