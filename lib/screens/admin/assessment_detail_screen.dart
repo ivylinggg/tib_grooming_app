@@ -1,11 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 
+import '../../config/hosting_config.dart';
 import '../../models/app_user.dart';
 import '../../models/overall_result.dart';
 import '../../services/auth_service.dart';
 import '../../services/firebase_service.dart';
+import '../../services/pdf_service.dart';
 import '../auth/login_screen.dart';
 import '../auth/role_selection_screen.dart';
 
@@ -32,6 +35,16 @@ import '../auth/role_selection_screen.dart';
 ///
 /// Deleting a record stays Admin-only -- the delete action is hidden
 /// entirely for a Staff viewer, regardless of whose assessment it is.
+///
+/// Export PDF and Share Result (see [_exportPdf]/[_shareResult]) are
+/// only ever reachable once [_load] has already confirmed the viewer is
+/// allowed to see this specific assessment -- there is no separate
+/// permission check for those two actions because there is no
+/// additional privilege they need beyond "can view this screen at
+/// all". A Staff account can therefore never export/share another
+/// participant's result by guessing an assessment ID: [_load] would
+/// have already redirected them to an error state before either button
+/// ever renders.
 class AssessmentDetailScreen extends StatefulWidget {
   final String assessmentId;
 
@@ -60,6 +73,21 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
   Map<String, dynamic>? _assessment;
   bool _loading = true;
   String? _error;
+
+  /// From the linked Participant record (FirebaseService.getParticipant)
+  /// -- never stored on the assessment document itself. Null (rendered
+  /// as "Not available") if the Participant record is missing or the
+  /// lookup fails; loaded best-effort by [_loadExtras], never blocking
+  /// the main assessment content from showing.
+  String? _trainerName;
+
+  /// Current public-sharing state for this assessment (see
+  /// FirebaseService.getSharingStatus/enableSharing/disableSharing).
+  /// Loaded best-effort by [_loadExtras] alongside [_trainerName].
+  SharingStatus _sharing = const SharingStatus();
+
+  bool _exportingPdf = false;
+  bool _sharingBusy = false;
 
   @override
   void initState() {
@@ -146,6 +174,181 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
       _assessment = data;
       _loading = false;
     });
+
+    _loadExtras(data);
+  }
+
+  /// Best-effort secondary data for the Export PDF / Share Result
+  /// actions -- never blocks or fails [_load] itself. Trainer Name
+  /// comes from the linked Participant record (there is no
+  /// `trainerName` field on the assessment document); sharing status
+  /// comes from `assessments/{id}.shareToken`/`.sharingEnabled`. Both
+  /// simply stay at their defaults ("Not available" / not shared) if
+  /// either lookup fails -- nothing here is essential to viewing the
+  /// assessment itself.
+  Future<void> _loadExtras(Map<String, dynamic> data) async {
+    final participantId = data["participantId"]?.toString();
+
+    Map<String, dynamic>? participant;
+    if (participantId != null && participantId.isNotEmpty) {
+      participant = await _firebaseService.getParticipant(participantId);
+    }
+
+    final sharing = await _firebaseService.getSharingStatus(
+      widget.assessmentId,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _trainerName = participant?["trainer"]?.toString();
+      _sharing = sharing;
+    });
+  }
+
+  /// Generates a real PDF (PdfService) and hands it to the OS
+  /// share/save sheet. The success message only ever shows after
+  /// `Printing.sharePdf` completes without throwing -- by then the file
+  /// has genuinely been written to a real temporary file and the share
+  /// sheet has been invoked; nothing here reports success just because
+  /// a widget rendered.
+  Future<void> _exportPdf() async {
+    if (_assessment == null || _exportingPdf) return;
+
+    setState(() {
+      _exportingPdf = true;
+    });
+
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      await PdfService().exportAndShareAssessmentPdf(
+        assessmentData: _assessment!,
+        trainerName: _trainerName,
+      );
+
+      if (!mounted) return;
+
+      messenger.showSnackBar(
+        const SnackBar(content: Text("PDF exported successfully.")),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text("Could not export PDF: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _exportingPdf = false;
+        });
+      }
+    }
+  }
+
+  /// Turns on (or reuses) this assessment's share link
+  /// (FirebaseService.enableSharing) and opens the real native Share
+  /// Sheet with it via share_plus -- never just a copied-to-clipboard
+  /// string. The link only ever resolves
+  /// `shared_results/{token}` -- a minimal public-safe copy -- never
+  /// the original `assessments` collection; see
+  /// FirebaseService.enableSharing's doc comment for the full security
+  /// reasoning.
+  Future<void> _shareResult() async {
+    if (_assessment == null || _sharingBusy) return;
+
+    setState(() {
+      _sharingBusy = true;
+    });
+
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      final token = await _firebaseService.enableSharing(
+        assessmentId: widget.assessmentId,
+        assessmentData: _assessment!,
+        trainerName: _trainerName,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _sharing = SharingStatus(token: token, enabled: true);
+      });
+
+      final participantName =
+          _assessment!["participantName"]?.toString() ?? "this participant";
+      final url = "$kPublicResultBaseUrl/$token";
+
+      await Share.share(
+        "TIB Grooming Assessment Result\n\n"
+        "View the grooming assessment result for $participantName here:\n"
+        "$url",
+        subject: "TIB Grooming Assessment Result",
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text("Could not create share link: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _sharingBusy = false;
+        });
+      }
+    }
+  }
+
+  /// Revokes the current share link (FirebaseService.disableSharing) --
+  /// the public page stops resolving it immediately.
+  Future<void> _disableSharing() async {
+    if (_sharingBusy) return;
+
+    setState(() {
+      _sharingBusy = true;
+    });
+
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      await _firebaseService.disableSharing(widget.assessmentId);
+
+      if (!mounted) return;
+
+      setState(() {
+        _sharing = const SharingStatus();
+      });
+
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text("Sharing disabled. The link no longer works."),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text("Could not disable sharing: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _sharingBusy = false;
+        });
+      }
+    }
   }
 
   Color _resultColor(String result) {
@@ -433,6 +636,66 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Text(suggestion),
+              ),
+            ),
+          ],
+
+          const SizedBox(height: 28),
+          const Divider(),
+          const SizedBox(height: 12),
+
+          // Full-width, stacked buttons -- not a Row+Expanded pair --
+          // deliberately: a Row of two icon+label buttons is exactly
+          // the shape that already overflowed on small screens/large
+          // accessibility text sizes elsewhere in this app (see
+          // ParticipantManagementScreen's action buttons); stacking
+          // avoids that class of bug entirely instead of trying to
+          // out-guess every possible width/font-scale combination.
+          ElevatedButton.icon(
+            onPressed: _exportingPdf ? null : _exportPdf,
+            icon: _exportingPdf
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.picture_as_pdf_outlined),
+            label: Text(_exportingPdf ? "Generating PDF..." : "Export PDF"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1F3D73),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          OutlinedButton.icon(
+            onPressed: _sharingBusy ? null : _shareResult,
+            icon: _sharingBusy
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.share_outlined),
+            label: Text(_sharing.isActive ? "Share Again" : "Share Result"),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+          ),
+
+          if (_sharing.isActive) ...[
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: _sharingBusy ? null : _disableSharing,
+              icon: const Icon(Icons.link_off, color: Colors.red, size: 18),
+              label: const Text(
+                "Disable Sharing",
+                style: TextStyle(color: Colors.red),
               ),
             ),
           ],

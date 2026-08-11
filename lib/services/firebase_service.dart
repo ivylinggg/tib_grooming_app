@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -6,6 +7,22 @@ import 'package:flutter/foundation.dart';
 
 import '../api/google_drive_api.dart';
 import '../models/register_result.dart';
+
+/// Whether -- and via what token -- one assessment currently has public
+/// sharing turned on. Mirrors the same typed-result-object pattern
+/// already used for [RegisterResult]/[UpdateStaffResult] rather than a
+/// bare nullable String, since "no token" and "token exists but sharing
+/// is off" are both real, distinct states a caller needs to branch on.
+class SharingStatus {
+  final String? token;
+  final bool enabled;
+
+  const SharingStatus({this.token, this.enabled = false});
+
+  /// True only when there's an active token a public URL can actually
+  /// resolve right now.
+  bool get isActive => enabled && token != null && token!.isNotEmpty;
+}
 
 class FirebaseService {
   FirebaseService();
@@ -405,5 +422,127 @@ class FirebaseService {
   /// Delete Assessment
   Future<void> deleteAssessment(String documentId) async {
     await _firestore.collection("assessments").doc(documentId).delete();
+  }
+
+  /// Current public-sharing state for one assessment -- read from
+  /// `assessments/{assessmentId}.shareToken`/`.sharingEnabled`, the
+  /// only place that state lives on the private side. Returns an
+  /// inactive [SharingStatus] (never throws) if the assessment has
+  /// never been shared or no longer exists.
+  Future<SharingStatus> getSharingStatus(String assessmentId) async {
+    try {
+      final doc = await _firestore
+          .collection("assessments")
+          .doc(assessmentId)
+          .get();
+
+      return SharingStatus(
+        token: doc.data()?["shareToken"]?.toString(),
+        enabled: doc.data()?["sharingEnabled"] == true,
+      );
+    } catch (e) {
+      debugPrint("getSharingStatus: $e");
+      return const SharingStatus();
+    }
+  }
+
+  /// Turns on public sharing for one assessment and returns the token
+  /// its public URL uses (`$kPublicResultBaseUrl/<token>`).
+  ///
+  /// Two separate writes, deliberately never combined into one:
+  /// 1. `assessments/{assessmentId}` -- the private source of truth --
+  ///    gets `shareToken`/`sharingEnabled` fields added. This document
+  ///    is never made publicly readable; nothing here changes who can
+  ///    read it.
+  /// 2. `shared_results/{token}` -- a brand-new, separate document
+  ///    containing ONLY the fields that are safe to show a stranger
+  ///    with no login: participant name/Staff ID/trainer name/date,
+  ///    score, result, criteria, AI summary/recommendation, photo
+  ///    URLs, and `sharingEnabled`. No Firebase uid, no auth token, no
+  ///    internal Firestore path, no field from any other collection.
+  ///    This is the only document the public result page
+  ///    (public_hosting/result.html) ever reads, gated by a Firestore
+  ///    rule that requires `sharingEnabled == true` -- the `assessments`
+  ///    collection itself is never touched by that rule at all.
+  ///
+  /// Re-sharing an already-shared, still-enabled assessment reuses the
+  /// same token (idempotent) instead of minting a new one every tap, so
+  /// a link someone already has keeps working. A token from a
+  /// previously *disabled* share is never reactivated silently -- a
+  /// fresh one is generated instead, so an old, once-revoked link can
+  /// never start working again just by sharing again.
+  Future<String> enableSharing({
+    required String assessmentId,
+    required Map<String, dynamic> assessmentData,
+    String? trainerName,
+  }) async {
+    final assessmentRef = _firestore
+        .collection("assessments")
+        .doc(assessmentId);
+
+    final existing = await assessmentRef.get();
+    final existingToken = existing.data()?["shareToken"]?.toString();
+    final existingEnabled = existing.data()?["sharingEnabled"] == true;
+
+    final token =
+        (existingToken != null && existingToken.isNotEmpty && existingEnabled)
+        ? existingToken
+        : _generateShareToken();
+
+    await assessmentRef.update({"shareToken": token, "sharingEnabled": true});
+
+    await _firestore.collection("shared_results").doc(token).set({
+      "assessmentId": assessmentId,
+      "participantId": assessmentData["participantId"],
+      "participantName": assessmentData["participantName"],
+      "trainerName": (trainerName == null || trainerName.isEmpty)
+          ? null
+          : trainerName,
+      "totalScore": assessmentData["totalScore"],
+      "overall": assessmentData["overall"],
+      "summary": assessmentData["summary"],
+      "suggestion": assessmentData["suggestion"],
+      "criteria": assessmentData["criteria"],
+      "referencePhotoUrl": assessmentData["referencePhotoUrl"],
+      "todayPhotoUrl": assessmentData["todayPhotoUrl"],
+      "assessmentDate": assessmentData["createdAt"],
+      "sharingEnabled": true,
+      "sharedAt": FieldValue.serverTimestamp(),
+    });
+
+    return token;
+  }
+
+  /// Turns public sharing off. Both the private flag (so re-sharing
+  /// generates a fresh token instead of reactivating this one -- see
+  /// [enableSharing]) and the public copy's own flag (so the public
+  /// page stops resolving this token immediately, without waiting for
+  /// anything else) are flipped together.
+  Future<void> disableSharing(String assessmentId) async {
+    final assessmentRef = _firestore
+        .collection("assessments")
+        .doc(assessmentId);
+
+    final doc = await assessmentRef.get();
+    final token = doc.data()?["shareToken"]?.toString();
+
+    await assessmentRef.update({"sharingEnabled": false});
+
+    if (token != null && token.isNotEmpty) {
+      await _firestore.collection("shared_results").doc(token).update({
+        "sharingEnabled": false,
+      });
+    }
+  }
+
+  /// A cryptographically random, 64-hex-character (256-bit) token --
+  /// generated with `Random.secure()`, a real CSPRNG, never
+  /// `Random()`. Deliberately not derived from the Staff ID or any
+  /// other predictable value: a share link must not be guessable just
+  /// by knowing (or enumerating) real Staff IDs.
+  String _generateShareToken() {
+    final random = Random.secure();
+    final bytes = List<int>.generate(32, (_) => random.nextInt(256));
+    return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
   }
 }
