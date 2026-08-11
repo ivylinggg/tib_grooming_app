@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../api/assessment_api.dart';
 import '../models/participant.dart';
 import '../screens/result_screen.dart';
+import '../services/assessment_service.dart';
 import '../services/firebase_service.dart';
 import 'appearance_card.dart';
 import 'primary_button.dart';
@@ -253,9 +254,65 @@ class _CheckInCardState extends State<CheckInCard> {
                 }
                 if (!mounted) return;
 
+                final assessmentService = AssessmentService();
+
+                // Apps Script's analyze response carries no participant
+                // context -- ResultScreen displays it, so attach what's
+                // already known locally instead of showing "-" for every
+                // field. Also uploads today's photo so saveAssessment()
+                // doesn't persist an empty todayPhotoUrl.
+                final resultWithParticipant = await assessmentService
+                    .prepareAssessment(
+                      result: result,
+                      referencePhotoUrl: participant!.photoUrl,
+                      todayPhoto: todayPhoto!,
+                      participantId: participant!.staffId,
+                      staffId: participant!.staffId,
+                      participantName: participant!.fullName,
+                      trainerName: participant!.trainerName,
+                      assessmentDate: today,
+                    );
+
+                if (!mounted) return;
+
+                if (resultWithParticipant == null) {
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        assessmentService.lastUploadError ??
+                            "Failed to upload today's photo.",
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+
+                // Same persistence path AssessmentScreen uses -- both
+                // entry points save through AssessmentService instead of
+                // duplicating the FirebaseService.saveAssessment() call
+                // shape at each call site.
+                final saved = await assessmentService.saveAssessment(
+                  participantId: participant!.staffId,
+                  participantName: participant!.fullName,
+                  result: resultWithParticipant,
+                );
+
+                if (!mounted) return;
+
+                if (!saved) {
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text("Failed to save assessment."),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+
                 navigator.push(
                   MaterialPageRoute(
-                    builder: (_) => ResultScreen(result: result),
+                    builder: (_) => ResultScreen(result: resultWithParticipant),
                   ),
                 );
               },

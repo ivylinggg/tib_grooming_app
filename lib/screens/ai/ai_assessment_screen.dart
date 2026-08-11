@@ -6,6 +6,7 @@ import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 import '../../api/assessment_api.dart';
 import '../../models/assessment_result.dart';
+import '../../services/assessment_service.dart';
 import '../../services/firebase_service.dart';
 
 import '../assessment_screen.dart';
@@ -28,6 +29,7 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
   CameraController? controller;
 
   final AssessmentApi assessmentApi = AssessmentApi();
+  final AssessmentService assessmentService = AssessmentService();
 
   final FirebaseService firebaseService = FirebaseService();
 
@@ -170,8 +172,13 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
       return;
     }
 
+    // participant is a raw Firestore map (dynamic values) -- guard the cast
+    // so a missing/malformed photoUrl fails gracefully through analyze()'s
+    // own try/catch instead of throwing before it's even called.
+    final referencePhotoUrl = (participant["photoUrl"] as String?) ?? "";
+
     final aiResult = await assessmentApi.analyze(
-      referencePhotoUrl: participant["photoUrl"],
+      referencePhotoUrl: referencePhotoUrl,
       todayPhoto: capturedImage!,
     );
 
@@ -193,13 +200,40 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
 
     if (!mounted) return;
 
+    // Apps Script's analyze response never echoes the reference photo URL
+    // back -- attach it here so AssessmentScreen's saveAssessment() call
+    // doesn't persist an empty referencePhotoUrl to Firestore. Also
+    // uploads today's captured photo so todayPhotoUrl isn't empty either.
+    final resultWithPhotos = await assessmentService.prepareAssessment(
+      result: aiResult,
+      referencePhotoUrl: referencePhotoUrl,
+      todayPhoto: capturedImage!,
+      participantId: widget.participantId,
+    );
+
+    if (!mounted) return;
+
+    if (resultWithPhotos == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            assessmentService.lastUploadError ??
+                "Failed to upload today's photo.",
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+
+      return;
+    }
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (_) => AssessmentScreen(
           participantId: widget.participantId,
           participantName: widget.participantName,
-          assessmentResult: aiResult,
+          assessmentResult: resultWithPhotos,
         ),
       ),
     );

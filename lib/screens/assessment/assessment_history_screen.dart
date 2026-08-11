@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import '../../models/overall_result.dart';
 import '../../services/firebase_service.dart';
 
 class AssessmentHistoryScreen extends StatelessWidget {
@@ -14,17 +15,17 @@ class AssessmentHistoryScreen extends StatelessWidget {
   });
 
   Color _resultColor(String result) {
-    switch (result.toLowerCase()) {
-      case "excellent":
+    switch (OverallResult.classify(result)) {
+      case OverallResult.excellent:
         return Colors.green;
 
-      case "good":
+      case OverallResult.good:
         return Colors.blue;
 
-      case "fair":
+      case OverallResult.needsWork:
         return Colors.orange;
 
-      default:
+      case OverallResult.insufficient:
         return Colors.red;
     }
   }
@@ -51,9 +52,7 @@ class AssessmentHistoryScreen extends StatelessWidget {
         foregroundColor: Colors.white,
         title: const Text(
           "Assessment History",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
 
@@ -62,20 +61,14 @@ class AssessmentHistoryScreen extends StatelessWidget {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(
-              color: Color(0xFF1F3D73),
-            ),
+            decoration: const BoxDecoration(color: Color(0xFF1F3D73)),
 
             child: Column(
               children: [
                 const CircleAvatar(
                   radius: 40,
                   backgroundColor: Colors.white,
-                  child: Icon(
-                    Icons.person,
-                    size: 42,
-                    color: Color(0xFF1F3D73),
-                  ),
+                  child: Icon(Icons.person, size: 42, color: Color(0xFF1F3D73)),
                 ),
 
                 const SizedBox(height: 15),
@@ -93,9 +86,7 @@ class AssessmentHistoryScreen extends StatelessWidget {
 
                 Text(
                   participantId,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                  ),
+                  style: const TextStyle(color: Colors.white70),
                 ),
               ],
             ),
@@ -108,21 +99,41 @@ class AssessmentHistoryScreen extends StatelessWidget {
               ),
 
               builder: (context, snapshot) {
-                if (snapshot.connectionState ==
-                    ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
                 }
 
                 if (snapshot.hasError) {
-                  return Center(
-                    child: Text(snapshot.error.toString()),
+                  // Never the raw FirebaseException -- see
+                  // FirebaseService.streamParticipantAssessments's doc
+                  // comment for why this query no longer needs a
+                  // composite index in the first place; this stays as a
+                  // safety net for any other failure (e.g. offline).
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 48,
+                            color: Colors.red,
+                          ),
+                          SizedBox(height: 12),
+                          Text(
+                            "Could not load assessment history right now. "
+                            "Please try again later.",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ],
+                      ),
+                    ),
                   );
                 }
 
-                if (!snapshot.hasData ||
-                    snapshot.data!.docs.isEmpty) {
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                   return const Center(
                     child: Text(
                       "No Assessment History",
@@ -131,7 +142,17 @@ class AssessmentHistoryScreen extends StatelessWidget {
                   );
                 }
 
-                final docs = snapshot.data!.docs;
+                // streamParticipantAssessments() is a single-field
+                // `where` with no `orderBy` (avoids requiring a
+                // Firestore composite index), so newest-first is sorted
+                // client-side here.
+                final docs = [...snapshot.data!.docs]
+                  ..sort((a, b) {
+                    final aTime = a.data()["createdAt"];
+                    final bTime = b.data()["createdAt"];
+                    if (aTime is! Timestamp || bTime is! Timestamp) return 0;
+                    return bTime.compareTo(aTime);
+                  });
 
                 return ListView.builder(
                   padding: const EdgeInsets.all(20),
@@ -141,41 +162,34 @@ class AssessmentHistoryScreen extends StatelessWidget {
                     final doc = docs[index];
                     final data = doc.data();
 
-                    final score = (data["score"] ?? 0) as int;
-                    final result =
-                        data["result"]?.toString() ?? "-";
+                    // Matches the field names saveAssessment() actually
+                    // writes (FirebaseService.saveAssessment) -- "score"
+                    // and "result" don't exist on these documents.
+                    final score = (data["totalScore"] ?? 0) as int;
+                    final result = data["overall"]?.toString() ?? "-";
 
-                    final date = _formatDate(
-                      data["createdAt"] as Timestamp?,
-                    );
+                    final date = _formatDate(data["createdAt"] as Timestamp?);
 
                     return Card(
                       elevation: 4,
-                      margin:
-                          const EdgeInsets.only(bottom: 20),
+                      margin: const EdgeInsets.only(bottom: 20),
 
                       shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(20),
                       ),
 
                       child: Padding(
-                        padding:
-                            const EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(20),
 
                         child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
 
                           children: [
                             Row(
                               children: [
                                 CircleAvatar(
                                   radius: 22,
-                                  backgroundColor:
-                                      const Color(
-                                    0xFF1F3D73,
-                                  ),
+                                  backgroundColor: const Color(0xFF1F3D73),
 
                                   child: const Icon(
                                     Icons.assignment,
@@ -188,69 +202,46 @@ class AssessmentHistoryScreen extends StatelessWidget {
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
-                                        CrossAxisAlignment
-                                            .start,
+                                        CrossAxisAlignment.start,
 
                                     children: [
                                       Text(
                                         date,
-                                        style:
-                                            const TextStyle(
-                                          fontWeight:
-                                              FontWeight
-                                                  .bold,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
                                           fontSize: 16,
                                         ),
                                       ),
 
-                                      const SizedBox(
-                                        height: 4,
-                                      ),
+                                      const SizedBox(height: 4),
 
                                       const Text(
                                         "Assessment Record",
-                                        style: TextStyle(
-                                          color:
-                                              Colors.grey,
-                                        ),
+                                        style: TextStyle(color: Colors.grey),
                                       ),
                                     ],
                                   ),
                                 ),
 
                                 Container(
-                                  padding:
-                                      const EdgeInsets
-                                          .symmetric(
+                                  padding: const EdgeInsets.symmetric(
                                     horizontal: 14,
                                     vertical: 8,
                                   ),
 
-                                  decoration:
-                                      BoxDecoration(
+                                  decoration: BoxDecoration(
                                     color: _resultColor(
                                       result,
-                                    ).withValues(
-                                      alpha: 0.15,
-                                    ),
+                                    ).withValues(alpha: 0.15),
 
-                                    borderRadius:
-                                        BorderRadius
-                                            .circular(
-                                      30,
-                                    ),
+                                    borderRadius: BorderRadius.circular(30),
                                   ),
 
                                   child: Text(
                                     "$score%",
                                     style: TextStyle(
-                                      fontWeight:
-                                          FontWeight
-                                              .bold,
-                                      color:
-                                          _resultColor(
-                                        result,
-                                      ),
+                                      fontWeight: FontWeight.bold,
+                                      color: _resultColor(result),
                                     ),
                                   ),
                                 ),
@@ -258,7 +249,7 @@ class AssessmentHistoryScreen extends StatelessWidget {
                             ),
 
                             const SizedBox(height: 20),
-                                                        Row(
+                            Row(
                               children: [
                                 const Text(
                                   "Result",
@@ -271,15 +262,13 @@ class AssessmentHistoryScreen extends StatelessWidget {
                                 const Spacer(),
 
                                 Chip(
-                                  backgroundColor:
-                                      _resultColor(result),
+                                  backgroundColor: _resultColor(result),
 
                                   label: Text(
                                     result,
                                     style: const TextStyle(
                                       color: Colors.white,
-                                      fontWeight:
-                                          FontWeight.bold,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ),
@@ -292,22 +281,13 @@ class AssessmentHistoryScreen extends StatelessWidget {
                               children: [
                                 Expanded(
                                   child: ElevatedButton.icon(
-                                    icon: const Icon(
-                                      Icons.visibility,
-                                    ),
+                                    icon: const Icon(Icons.visibility),
 
-                                    label: const Text(
-                                      "Details",
-                                    ),
+                                    label: const Text("Details"),
 
-                                    style:
-                                        ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          const Color(
-                                        0xFF1F3D73,
-                                      ),
-                                      foregroundColor:
-                                          Colors.white,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF1F3D73),
+                                      foregroundColor: Colors.white,
                                     ),
 
                                     onPressed: () {
@@ -319,79 +299,63 @@ class AssessmentHistoryScreen extends StatelessWidget {
                                               "Assessment Details",
                                             ),
 
-                                            content:
-                                                SingleChildScrollView(
+                                            content: SingleChildScrollView(
                                               child: Column(
-                                                mainAxisSize:
-                                                    MainAxisSize
-                                                        .min,
+                                                mainAxisSize: MainAxisSize.min,
 
                                                 crossAxisAlignment:
-                                                    CrossAxisAlignment
-                                                        .start,
+                                                    CrossAxisAlignment.start,
 
                                                 children: [
                                                   Text(
                                                     participantName,
-                                                    style:
-                                                        const TextStyle(
+                                                    style: const TextStyle(
                                                       fontWeight:
-                                                          FontWeight
-                                                              .bold,
-                                                      fontSize:
-                                                          18,
+                                                          FontWeight.bold,
+                                                      fontSize: 18,
                                                     ),
                                                   ),
 
-                                                  const SizedBox(
-                                                    height: 18,
-                                                  ),
+                                                  const SizedBox(height: 18),
 
-                                                  Text(
-                                                    "Date : $date",
-                                                  ),
+                                                  Text("Date : $date"),
 
-                                                  Text(
-                                                    "Score : $score%",
-                                                  ),
+                                                  Text("Score : $score%"),
 
-                                                  Text(
-                                                    "Result : $result",
-                                                  ),
+                                                  Text("Result : $result"),
 
-                                                  const Divider(
-                                                    height: 30,
-                                                  ),
+                                                  const Divider(height: 30),
 
-                                                  _buildItem(
-                                                    "Hair",
-                                                    data["hair"] ==
-                                                        true,
-                                                  ),
+                                                  // saveAssessment() never
+                                                  // writes hair/uniform/tie/
+                                                  // shoes/nameTag fields (a
+                                                  // leftover checklist shape
+                                                  // from an earlier model) --
+                                                  // the real per-criterion
+                                                  // breakdown is in
+                                                  // data["criteria"].
+                                                  ...(data["criteria"]
+                                                              as List<
+                                                                dynamic
+                                                              >? ??
+                                                          [])
+                                                      .map((c) {
+                                                        final map =
+                                                            c
+                                                                as Map<
+                                                                  String,
+                                                                  dynamic
+                                                                >;
 
-                                                  _buildItem(
-                                                    "Uniform",
-                                                    data["uniform"] ==
-                                                        true,
-                                                  ),
-
-                                                  _buildItem(
-                                                    "Tie",
-                                                    data["tie"] ==
-                                                        true,
-                                                  ),
-
-                                                  _buildItem(
-                                                    "Shoes",
-                                                    data["shoes"] ==
-                                                        true,
-                                                  ),
-
-                                                  _buildItem(
-                                                    "Name Tag",
-                                                    data["nameTag"] ==
-                                                        true,
-                                                  ),
+                                                        return _buildItem(
+                                                          map["label"]
+                                                                  ?.toString() ??
+                                                              "-",
+                                                          map["score"]
+                                                                  ?.toString() ??
+                                                              "-",
+                                                        );
+                                                      }),
                                                 ],
                                               ),
                                             ),
@@ -399,13 +363,10 @@ class AssessmentHistoryScreen extends StatelessWidget {
                                             actions: [
                                               TextButton(
                                                 onPressed: () {
-                                                  Navigator.pop(
-                                                      context);
+                                                  Navigator.pop(context);
                                                 },
 
-                                                child: const Text(
-                                                  "Close",
-                                                ),
+                                                child: const Text("Close"),
                                               ),
                                             ],
                                           );
@@ -419,49 +380,35 @@ class AssessmentHistoryScreen extends StatelessWidget {
 
                                 Expanded(
                                   child: ElevatedButton.icon(
-                                    icon: const Icon(
-                                      Icons.delete,
-                                    ),
+                                    icon: const Icon(Icons.delete),
 
-                                    label: const Text(
-                                      "Delete",
-                                    ),
+                                    label: const Text("Delete"),
 
-                                    style:
-                                        ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          Colors.red,
-                                      foregroundColor:
-                                          Colors.white,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red,
+                                      foregroundColor: Colors.white,
                                     ),
 
                                     onPressed: () async {
-                                      final confirm =
-                                          await showDialog<bool>(
+                                      final confirm = await showDialog<bool>(
                                         context: context,
-                                        builder: (_) =>
-                                            AlertDialog(
+                                        builder: (_) => AlertDialog(
                                           title: const Text(
-                                              "Delete Assessment"),
+                                            "Delete Assessment",
+                                          ),
                                           content: const Text(
                                             "Are you sure you want to delete this assessment?",
                                           ),
                                           actions: [
                                             TextButton(
                                               onPressed: () =>
-                                                  Navigator.pop(
-                                                      context,
-                                                      false),
-                                              child: const Text(
-                                                  "Cancel"),
+                                                  Navigator.pop(context, false),
+                                              child: const Text("Cancel"),
                                             ),
                                             ElevatedButton(
                                               onPressed: () =>
-                                                  Navigator.pop(
-                                                      context,
-                                                      true),
-                                              child: const Text(
-                                                  "Delete"),
+                                                  Navigator.pop(context, true),
+                                              child: const Text("Delete"),
                                             ),
                                           ],
                                         ),
@@ -471,17 +418,17 @@ class AssessmentHistoryScreen extends StatelessWidget {
                                         return;
                                       }
 
-                                      await firebaseService
-                                          .deleteAssessment(
-                                              doc.id);
+                                      await firebaseService.deleteAssessment(
+                                        doc.id,
+                                      );
 
                                       if (!context.mounted) {
                                         return;
                                       }
 
                                       ScaffoldMessenger.of(
-                                              context)
-                                          .showSnackBar(
+                                        context,
+                                      ).showSnackBar(
                                         const SnackBar(
                                           content: Text(
                                             "Assessment deleted successfully",
@@ -494,11 +441,11 @@ class AssessmentHistoryScreen extends StatelessWidget {
                               ],
                             ),
                           ],
-                        )
+                        ),
                       ),
                     );
                   },
-                              );
+                );
               },
             ),
           ),
@@ -507,22 +454,15 @@ class AssessmentHistoryScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildItem(String title, bool value) {
+  Widget _buildItem(String title, String score) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontSize: 15,
-              ),
-            ),
-          ),
-          Icon(
-            value ? Icons.check_circle : Icons.cancel,
-            color: value ? Colors.green : Colors.red,
+          Expanded(child: Text(title, style: const TextStyle(fontSize: 15))),
+          Text(
+            "$score/10",
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ],
       ),

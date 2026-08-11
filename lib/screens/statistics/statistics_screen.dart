@@ -6,13 +6,10 @@ class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
 
   @override
-  State<StatisticsScreen> createState() =>
-      _StatisticsScreenState();
+  State<StatisticsScreen> createState() => _StatisticsScreenState();
 }
 
-class _StatisticsScreenState
-    extends State<StatisticsScreen> {
-
+class _StatisticsScreenState extends State<StatisticsScreen> {
   int totalParticipants = 0;
   int totalAssessments = 0;
 
@@ -29,35 +26,27 @@ class _StatisticsScreenState
   }
 
   Future<void> loadStatistics() async {
+    final participantSnapshot = await FirebaseFirestore.instance
+        .collection("participants")
+        .get();
 
-    final participantSnapshot =
-        await FirebaseFirestore.instance
-            .collection("participants")
-            .get();
+    final assessmentSnapshot = await FirebaseFirestore.instance
+        .collection("assessments")
+        .get();
 
-    final assessmentSnapshot =
-        await FirebaseFirestore.instance
-            .collection("assessments")
-            .get();
+    totalParticipants = participantSnapshot.docs.length;
 
-    totalParticipants =
-        participantSnapshot.docs.length;
-
-    totalAssessments =
-        assessmentSnapshot.docs.length;
+    totalAssessments = assessmentSnapshot.docs.length;
 
     int totalScore = 0;
 
     pass = 0;
     fail = 0;
 
-    for (final doc
-        in assessmentSnapshot.docs) {
-
+    for (final doc in assessmentSnapshot.docs) {
       final data = doc.data();
 
-      totalScore +=
-          (data["score"] ?? 0) as int;
+      totalScore += (data["score"] ?? 0) as int;
 
       if (data["result"] == "PASS") {
         pass++;
@@ -67,15 +56,9 @@ class _StatisticsScreenState
     }
 
     if (assessmentSnapshot.docs.isNotEmpty) {
+      averageScore = totalScore / assessmentSnapshot.docs.length;
 
-      averageScore =
-          totalScore /
-              assessmentSnapshot.docs.length;
-
-      passRate =
-          pass /
-              assessmentSnapshot.docs.length *
-              100;
+      passRate = pass / assessmentSnapshot.docs.length * 100;
     }
 
     setState(() {});
@@ -83,42 +66,28 @@ class _StatisticsScreenState
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-
-      backgroundColor:
-          const Color(0xFFF8F6F1),
+      backgroundColor: const Color(0xFFF8F6F1),
 
       appBar: AppBar(
-        backgroundColor:
-            const Color(0xFF1F3D73),
+        backgroundColor: const Color(0xFF1F3D73),
         foregroundColor: Colors.white,
         centerTitle: true,
-        title: const Text(
-          "Statistics",
-        ),
+        title: const Text("Statistics"),
       ),
 
       body: SingleChildScrollView(
-
-        padding:
-            const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
 
         child: Column(
-
           children: [
-
             Row(
               children: [
-
                 Expanded(
                   child: _StatisticCard(
-                    title:
-                        "Participants",
-                    value:
-                        "$totalParticipants",
-                    icon:
-                        Icons.people,
+                    title: "Participants",
+                    value: "$totalParticipants",
+                    icon: Icons.people,
                   ),
                 ),
 
@@ -126,15 +95,11 @@ class _StatisticsScreenState
 
                 Expanded(
                   child: _StatisticCard(
-                    title:
-                        "Assessments",
-                    value:
-                        "$totalAssessments",
-                    icon:
-                        Icons.fact_check,
+                    title: "Assessments",
+                    value: "$totalAssessments",
+                    icon: Icons.fact_check,
                   ),
                 ),
-
               ],
             ),
 
@@ -142,15 +107,11 @@ class _StatisticsScreenState
 
             Row(
               children: [
-
                 Expanded(
                   child: _StatisticCard(
-                    title:
-                        "Average Score",
-                    value:
-                        "${averageScore.toStringAsFixed(1)}%",
-                    icon:
-                        Icons.analytics,
+                    title: "Average Score",
+                    value: "${averageScore.toStringAsFixed(1)}%",
+                    icon: Icons.analytics,
                   ),
                 ),
 
@@ -158,49 +119,34 @@ class _StatisticsScreenState
 
                 Expanded(
                   child: _StatisticCard(
-                    title:
-                        "Pass Rate",
-                    value:
-                        "${passRate.toStringAsFixed(1)}%",
-                    icon:
-                        Icons.verified,
+                    title: "Pass Rate",
+                    value: "${passRate.toStringAsFixed(1)}%",
+                    icon: Icons.verified,
                   ),
                 ),
-
               ],
             ),
 
             const SizedBox(height: 30),
 
             Card(
-
               elevation: 3,
 
-              shape:
-                  RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.circular(
-                  16,
-                ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
 
               child: Padding(
-
-                padding:
-                    const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
 
                 child: Column(
-
                   children: [
-
                     const Text(
-
                       "Pass vs Fail",
 
                       style: TextStyle(
                         fontSize: 20,
-                        fontWeight:
-                            FontWeight.bold,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
 
@@ -211,8 +157,7 @@ class _StatisticsScreenState
 
                       child: PieChart(
                         PieChartData(
-                                                    sections: [
-
+                          sections: [
                             PieChartSectionData(
                               value: pass.toDouble(),
                               title: "PASS\n$pass",
@@ -234,7 +179,6 @@ class _StatisticsScreenState
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-
                           ],
 
                           centerSpaceRadius: 40,
@@ -246,45 +190,35 @@ class _StatisticsScreenState
                     const SizedBox(height: 20),
 
                     Row(
-                      mainAxisAlignment:
-                          MainAxisAlignment.spaceEvenly,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-
                         Row(
                           children: const [
-
                             CircleAvatar(
                               radius: 7,
-                              backgroundColor:
-                                  Colors.green,
+                              backgroundColor: Colors.green,
                             ),
 
                             SizedBox(width: 8),
 
                             Text("PASS"),
-
                           ],
                         ),
 
                         Row(
                           children: const [
-
                             CircleAvatar(
                               radius: 7,
-                              backgroundColor:
-                                  Colors.red,
+                              backgroundColor: Colors.red,
                             ),
 
                             SizedBox(width: 8),
 
                             Text("FAIL"),
-
                           ],
                         ),
-
                       ],
                     ),
-
                   ],
                 ),
               ),
@@ -293,81 +227,57 @@ class _StatisticsScreenState
             const SizedBox(height: 25),
 
             Card(
-
               elevation: 3,
 
-              shape:
-                  RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.circular(
-                  16,
-                ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
 
               child: Padding(
-
-                padding:
-                    const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
 
                 child: Column(
-
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
 
                   children: [
-
                     const Text(
                       "Assessment Summary",
                       style: TextStyle(
                         fontSize: 20,
-                        fontWeight:
-                            FontWeight.bold,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
 
                     const SizedBox(height: 20),
 
-                    Text(
-                      "Total Participants : $totalParticipants",
-                    ),
+                    Text("Total Participants : $totalParticipants"),
 
                     const SizedBox(height: 10),
 
-                    Text(
-                      "Total Assessments : $totalAssessments",
-                    ),
+                    Text("Total Assessments : $totalAssessments"),
 
                     const SizedBox(height: 10),
 
-                    Text(
-                      "PASS : $pass",
-                    ),
+                    Text("PASS : $pass"),
 
                     const SizedBox(height: 10),
 
-                    Text(
-                      "FAIL : $fail",
-                    ),
+                    Text("FAIL : $fail"),
 
                     const SizedBox(height: 10),
 
-                    Text(
-                      "Average Score : ${averageScore.toStringAsFixed(1)}%",
-                    ),
+                    Text("Average Score : ${averageScore.toStringAsFixed(1)}%"),
 
                     const SizedBox(height: 10),
 
-                    Text(
-                      "Pass Rate : ${passRate.toStringAsFixed(1)}%",
-                    ),
-
+                    Text("Pass Rate : ${passRate.toStringAsFixed(1)}%"),
                   ],
                 ),
               ),
             ),
 
             const SizedBox(height: 25),
-                        Card(
+            Card(
               elevation: 3,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -391,34 +301,26 @@ class _StatisticsScreenState
                       child: BarChart(
                         BarChartData(
                           alignment: BarChartAlignment.spaceAround,
-                          maxY: (pass > fail ? pass : fail)
-                                  .toDouble() +
-                              2,
+                          maxY: (pass > fail ? pass : fail).toDouble() + 2,
                           titlesData: FlTitlesData(
                             topTitles: const AxisTitles(
-                              sideTitles:
-                                  SideTitles(showTitles: false),
+                              sideTitles: SideTitles(showTitles: false),
                             ),
                             rightTitles: const AxisTitles(
-                              sideTitles:
-                                  SideTitles(showTitles: false),
+                              sideTitles: SideTitles(showTitles: false),
                             ),
                             leftTitles: const AxisTitles(
-                              sideTitles:
-                                  SideTitles(showTitles: true),
+                              sideTitles: SideTitles(showTitles: true),
                             ),
                             bottomTitles: AxisTitles(
                               sideTitles: SideTitles(
                                 showTitles: true,
-                                getTitlesWidget:
-                                    (value, meta) {
+                                getTitlesWidget: (value, meta) {
                                   switch (value.toInt()) {
                                     case 0:
-                                      return const Text(
-                                          "PASS");
+                                      return const Text("PASS");
                                     case 1:
-                                      return const Text(
-                                          "FAIL");
+                                      return const Text("FAIL");
                                     default:
                                       return const SizedBox();
                                   }
@@ -426,10 +328,8 @@ class _StatisticsScreenState
                               ),
                             ),
                           ),
-                          borderData:
-                              FlBorderData(show: false),
-                          gridData:
-                              const FlGridData(show: true),
+                          borderData: FlBorderData(show: false),
+                          gridData: const FlGridData(show: true),
                           barGroups: [
                             BarChartGroupData(
                               x: 0,
@@ -438,9 +338,7 @@ class _StatisticsScreenState
                                   toY: pass.toDouble(),
                                   color: Colors.green,
                                   width: 30,
-                                  borderRadius:
-                                      BorderRadius.circular(
-                                          6),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
                               ],
                             ),
@@ -451,9 +349,7 @@ class _StatisticsScreenState
                                   toY: fail.toDouble(),
                                   color: Colors.red,
                                   width: 30,
-                                  borderRadius:
-                                      BorderRadius.circular(
-                                          6),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
                               ],
                             ),
@@ -492,42 +388,24 @@ class _StatisticCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius:
-            BorderRadius.circular(18),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 8,
-          ),
-        ],
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8)],
       ),
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            color: const Color(0xFF1F3D73),
-            size: 30,
-          ),
+          Icon(icon, color: const Color(0xFF1F3D73), size: 30),
 
           const SizedBox(height: 12),
 
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
           ),
 
           const SizedBox(height: 4),
 
-          Text(
-            title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
+          Text(title, maxLines: 2, overflow: TextOverflow.ellipsis),
         ],
       ),
     );

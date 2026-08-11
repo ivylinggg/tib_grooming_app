@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../models/participant.dart';
-import 'history_card.dart';
 
 class ProfileCard extends StatelessWidget {
   final Participant participant;
@@ -31,8 +30,6 @@ class ProfileCard extends StatelessWidget {
             ),
 
             const SizedBox(height: 20),
-
-            const HistoryCard(),
 
             Row(
               children: [

@@ -159,7 +159,7 @@ class UploadPhotoCard extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: onPickGallery,
                   icon: const Icon(Icons.photo_library_outlined),
-                  label: const Text("From Gallery"),
+                  label: const Text("From Gallery/Files"),
                 ),
               ),
             ],

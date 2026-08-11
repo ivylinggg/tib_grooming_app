@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../auth/post_auth_router.dart';
 import '../../core/theme/app_theme.dart';
-import '../welcome/welcome_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -38,14 +38,23 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    Timer(const Duration(seconds: 3), () {
-      if (!mounted) return;
+    Timer(const Duration(seconds: 3), _routeNext);
+  }
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-      );
-    });
+  /// Routes based on whatever Firebase Auth session already exists on
+  /// this device -- never assumes Admin, never assumes signed-out.
+  /// [routeAfterAuth] (the same centralized resolver LoginScreen uses)
+  /// reads `FirebaseAuth.instance.currentUser` and, if present,
+  /// `users/{uid}.role`: a saved Admin/Staff account goes straight to
+  /// its dashboard, a signed-out or role-less session lands on
+  /// Sign In / Role Selection. This is not a "remember me" convenience
+  /// -- it only reflects whatever Firebase Auth itself already decided
+  /// is signed in; "Remember me" is unrelated and only ever pre-fills
+  /// LoginScreen's email/password fields (see LoginScreen.initState).
+  void _routeNext() {
+    if (!mounted) return;
+
+    routeAfterAuth(context);
   }
 
   @override

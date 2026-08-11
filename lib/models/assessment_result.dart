@@ -62,20 +62,27 @@ class AssessmentResult {
   });
 
   factory AssessmentResult.fromJson(Map<String, dynamic> json) {
+    final criteria =
+        (json['criteria'] as List<dynamic>?)
+            ?.map((e) => AssessmentCriteria.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        [];
+
+    // Apps Script's analyze response never includes a totalScore field --
+    // Claude only returns a score per criterion. Fall back to summing
+    // those so the UI isn't always shown a hardcoded 0.
+    final totalScore =
+        (json['totalScore'] as num?)?.toInt() ??
+        criteria.fold<int>(0, (sum, c) => sum + c.score);
+
     return AssessmentResult(
       gender: json['gender']?.toString() ?? '',
       overall: json['overall']?.toString() ?? '',
       summary: json['summary']?.toString() ?? '',
       suggestion: json['suggestion']?.toString() ?? '',
-      criteria:
-          (json['criteria'] as List<dynamic>?)
-              ?.map(
-                (e) => AssessmentCriteria.fromJson(e as Map<String, dynamic>),
-              )
-              .toList() ??
-          [],
+      criteria: criteria,
 
-      totalScore: (json['totalScore'] as num?)?.toInt() ?? 0,
+      totalScore: totalScore,
 
       submissionId: json['submissionId']?.toString() ?? '',
 

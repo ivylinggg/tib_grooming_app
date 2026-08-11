@@ -1,14 +1,55 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-import '../config/api_config.dart';
+import '../config/apps_script_config.dart';
 import '../models/assessment_result.dart';
 
+/// Minimal internal capture of an HTTP response -- status, body, the
+/// `Location` header for following a redirect, and any `Set-Cookie` for
+/// carrying a session forward across redirect hops. Not exposed outside
+/// this file. Mirrors GoogleDriveApi's identical private type -- kept
+/// separate rather than shared so this fix stays self-contained to this
+/// file.
+class _RawHttpResult {
+  final int statusCode;
+  final String body;
+  final String? location;
+  final String? setCookie;
+
+  const _RawHttpResult({
+    required this.statusCode,
+    required this.body,
+    this.location,
+    this.setCookie,
+  });
+}
+
+/// Calls the Apps Script backend (apps_script/Code.gs + Claude.gs) for
+/// full-body detection and AI grooming analysis. Claude itself is only
+/// ever called from Apps Script now -- this class no longer talks to
+/// api.anthropic.com directly, so no API key lives in the client.
+///
+/// Technical debt: `detectPerson`/`analyze` still report failure as
+/// `false`/`null`, collapsing "Apps Script unreachable", "Claude error",
+/// and "bad response shape" into one outcome. This should eventually
+/// adopt the same typed Result Object pattern introduced for
+/// registration in lib/models/register_result.dart, so callers can tell
+/// those cases apart. Not done in this phase -- the return types were
+/// required to stay unchanged.
 class AssessmentApi {
   AssessmentApi();
+
+  /// detectPerson's prompt is short (max_tokens: 20), so a stalled
+  /// connection or a stuck Claude call is bounded tightly. analyze sends
+  /// two images and a long rubric prompt (max_tokens: 2500), so it gets
+  /// more headroom. Both are well under Apps Script's own execution
+  /// ceiling for a Web App request.
+  static const _detectPersonTimeout = Duration(seconds: 20);
+  static const _analyzeTimeout = Duration(seconds: 45);
 
   /// File → Base64
   String _imageToBase64(File image) {
@@ -16,7 +57,9 @@ class AssessmentApi {
     return base64Encode(bytes);
   }
 
-  /// Download Firebase image → Base64
+  /// Download Firebase/Drive image → Base64. Apps Script's analyze action
+  /// takes the reference image as base64, not a URL, so it is still
+  /// downloaded and encoded here before the request is sent.
   Future<String> _urlToBase64(String imageUrl) async {
     final response = await http.get(Uri.parse(imageUrl));
 
@@ -27,125 +70,164 @@ class AssessmentApi {
     return base64Encode(response.bodyBytes);
   }
 
-  /// Claude Headers
-  Map<String, String> _headers() {
-    return {
-      "Content-Type": "application/json",
-      "x-api-key": ApiConfig.apiKey,
-      "anthropic-version": ApiConfig.anthropicVersion,
-    };
+  /// POST a JSON body to the Apps Script deployment and decode the JSON
+  /// response. Matches Code.gs's doPost, which dispatches on `action`.
+  ///
+  /// Apps Script Web App URLs (script.google.com/macros/s/.../exec)
+  /// always answer with an HTTP 302 to a script.googleusercontent.com
+  /// URL that carries the actual computed response -- Google's own
+  /// infrastructure behavior for every Web App deployment, the same one
+  /// GoogleDriveApi.uploadImage() had to handle for the upload action on
+  /// this exact endpoint. `analyze`/`detectPerson` hit that same /exec
+  /// URL, so they need the same redirect-following, which a plain
+  /// http.post() (the previous implementation here) never did -- it
+  /// just threw on the raw 302 status.
+  ///
+  /// [timeout] bounds the whole request (including Apps Script's
+  /// synchronous Claude call) so a stalled connection fails fast instead
+  /// of waiting indefinitely; a timeout surfaces as a TimeoutException,
+  /// caught by the callers' existing try/catch alongside every other
+  /// failure.
+  Future<Map<String, dynamic>> _post(
+    Map<String, dynamic> body, {
+    required Duration timeout,
+  }) async {
+    final client = HttpClient();
+
+    try {
+      final requestBody = jsonEncode(body);
+
+      _RawHttpResult current = await _send(
+        client,
+        method: "POST",
+        url: Uri.parse(AppsScriptConfig.execUrl),
+        body: requestBody,
+      ).timeout(timeout);
+
+      debugPrint("========== APPS SCRIPT REQUEST RESPONSE (hop 0) ==========");
+      debugPrint("Status: ${current.statusCode}");
+
+      const maxRedirectHops = 5;
+      String? cookie = current.setCookie;
+      var hop = 0;
+
+      while (_isRedirect(current.statusCode) && hop < maxRedirectHops) {
+        hop++;
+
+        final location = current.location;
+
+        debugPrint(
+          "APPS SCRIPT REQUEST: HTTP ${current.statusCode} redirect at hop "
+          "${hop - 1}, following to: $location",
+        );
+
+        if (location == null || location.isEmpty) {
+          throw Exception(
+            "Apps Script request redirected but did not say where to "
+            "(HTTP ${current.statusCode}, missing Location header).",
+          );
+        }
+
+        // The redirect target already carries Apps Script's computed
+        // response -- doPost() already ran on the very first request.
+        // Every hop from here on is a plain GET with no body.
+        current = await _send(
+          client,
+          method: "GET",
+          url: Uri.parse(location),
+          cookie: cookie,
+        ).timeout(timeout);
+
+        cookie = current.setCookie ?? cookie;
+
+        debugPrint(
+          "========== APPS SCRIPT REQUEST RESPONSE (hop $hop) ==========",
+        );
+        debugPrint("Status: ${current.statusCode}");
+        debugPrint("Body: ${current.body}");
+      }
+
+      if (_isRedirect(current.statusCode)) {
+        throw Exception(
+          "Apps Script request kept redirecting and never reached a "
+          "final response (last status ${current.statusCode}).",
+        );
+      }
+
+      if (current.statusCode != 200) {
+        throw Exception("Apps Script request failed: ${current.statusCode}");
+      }
+
+      return jsonDecode(current.body) as Map<String, dynamic>;
+    } finally {
+      client.close();
+    }
   }
 
-  /// Send Claude Request
-  Future<http.Response> _sendRequest(Map<String, dynamic> body) async {
-    return await http.post(
-      Uri.parse(ApiConfig.baseUrl),
-      headers: _headers(),
-      body: jsonEncode(body),
+  /// Issues one HTTP request with automatic redirect-following turned
+  /// off, so 3xx responses come back to the caller to handle explicitly.
+  /// Sends [cookie] as the `Cookie` header when following a later hop of
+  /// a redirect chain, and always reports any `Set-Cookie` the response
+  /// sent back so the caller can carry it to the next hop.
+  Future<_RawHttpResult> _send(
+    HttpClient client, {
+    required String method,
+    required Uri url,
+    String? body,
+    String? cookie,
+  }) async {
+    final request = await client.openUrl(method, url);
+    request.followRedirects = false;
+
+    request.headers.set(HttpHeaders.userAgentHeader, "tib-grooming-app/1.0");
+
+    if (cookie != null && cookie.isNotEmpty) {
+      request.headers.set(HttpHeaders.cookieHeader, cookie);
+    }
+
+    if (body != null) {
+      request.headers.set(HttpHeaders.contentTypeHeader, "application/json");
+      request.write(body);
+    }
+
+    final response = await request.close();
+    final responseBody = await response.transform(utf8.decoder).join();
+
+    final setCookie = response.cookies.isEmpty
+        ? null
+        : response.cookies.map((c) => "${c.name}=${c.value}").join("; ");
+
+    return _RawHttpResult(
+      statusCode: response.statusCode,
+      body: responseBody,
+      location: response.headers.value(HttpHeaders.locationHeader),
+      setCookie: setCookie,
     );
   }
 
-  Map<String, dynamic> _buildRequestBody({
-    required String referenceImageBase64,
-    required String todayImageBase64,
-    required String prompt,
-  }) {
-    return {
-      "model": ApiConfig.model,
-      "max_tokens": ApiConfig.maxTokens,
-      "messages": [
-        {
-          "role": "user",
-          "content": [
-            {
-              "type": "image",
-              "source": {
-                "type": "base64",
-                "media_type": "image/jpeg",
-                "data": referenceImageBase64,
-              },
-            },
-            {
-              "type": "image",
-              "source": {
-                "type": "base64",
-                "media_type": "image/jpeg",
-                "data": todayImageBase64,
-              },
-            },
-            {"type": "text", "text": prompt},
-          ],
-        },
-      ],
-    };
+  bool _isRedirect(int statusCode) {
+    return statusCode == 301 ||
+        statusCode == 302 ||
+        statusCode == 303 ||
+        statusCode == 307 ||
+        statusCode == 308;
   }
 
   Future<bool> detectPerson({required File image}) async {
     try {
       final imageBase64 = _imageToBase64(image);
 
-      const prompt = r'''
-Is this a FULL-BODY standing photo of ONE person?
+      final json = await _post({
+        "action": "detectPerson",
+        "imageBase64": imageBase64,
+        "mimeType": "image/jpeg",
+      }, timeout: _detectPersonTimeout);
 
-The photo MUST satisfy ALL conditions:
-
-1. Exactly ONE person.
-2. Face clearly visible.
-3. Hair clearly visible.
-4. Entire uniform visible.
-5. Shoes clearly visible.
-6. Standing upright.
-7. Front facing.
-8. Arms visible.
-9. Legs visible.
-10. No body part cropped.
-11. Not sitting.
-12. Not selfie.
-13. Not side view.
-14. Entire body fits inside the image.
-15. Suitable for airline grooming assessment.
-
-Reply ONLY:
-
-YES
-
-or
-
-NO
-''';
-
-      final body = {
-        "model": ApiConfig.model,
-        "max_tokens": 20,
-        "messages": [
-          {
-            "role": "user",
-            "content": [
-              {
-                "type": "image",
-                "source": {
-                  "type": "base64",
-                  "media_type": "image/jpeg",
-                  "data": imageBase64,
-                },
-              },
-              {"type": "text", "text": prompt},
-            ],
-          },
-        ],
-      };
-
-      final response = await _sendRequest(body);
-
-      if (response.statusCode != 200) {
+      if (json["success"] != true) {
         return false;
       }
 
-      final json = jsonDecode(response.body);
-
-      final text = json["content"][0]["text"].toString().trim().toUpperCase();
-
-      return text.contains("YES");
+      return json["isFullBody"] == true;
     } catch (e) {
       debugPrint("DetectPerson Error: $e");
       return false;
@@ -161,154 +243,21 @@ NO
 
       final referenceImageBase64 = await _urlToBase64(referencePhotoUrl);
 
-      const prompt = r'''
-You are a senior professional grooming assessor for Batik Air cabin crew. Apply STRICT airline-grade standards.
+      final json = await _post({
+        "action": "analyze",
+        "referenceB64": referenceImageBase64,
+        "referenceMime": "image/jpeg",
+        "todayB64": todayImageBase64,
+        "todayMime": "image/jpeg",
+      }, timeout: _analyzeTimeout);
 
-You are given TWO photos:
-- Image 1: REFERENCE photo - approved best-appearance standard
-- Image 2: TODAY's check-in photo - score strictly against the reference
+      debugPrint(json.toString());
 
-STEP 1 - DETECT GENDER: Look at reference photo. Return "gender":"male" or "female".
-
-STEP 2 - FOR EACH CATEGORY: Check rules. Apply LOWEST matching cap. If no cap, use general rubric.
-
-GENERAL RUBRIC (only when no cap applies):
-9-10: Perfect - zero visible flaws
-6-8: Meets standard - very minor imperfection
-3-5: Borderline - visible issue
-2: Clear obvious problem
-0-1: Severe violation
-
-SCORING PRINCIPLE: When uncertain, pick LOWER score.
-
-HAIR (FEMALE):
-Major flyaways + unkempt/loose -> MAX 2
-Untidy + flyaways -> MAX 5
-Untidy only OR minimal flyaways -> MAX 7
-No issues -> up to 10
-
-HAIR (MALE) TIER 1 - If ANY true -> MAX 3, stop:
-Hair exceeds shirt collar, crown exceeds 4cm, covers ears, prohibited style (punk/spike/mullet), sideburns exceed earlobe or 1.5cm width
-TIER 2 (only if Tier 1 passed): same caps as female hair above
-
-FACIAL GROOMING (MALE):
-Unshaven (visible beard/patchy) -> MAX 3
-Stubble (short prickly growth) -> MAX 5
-Minor shadow (very slight, visible follicles) -> MAX 6
-Clean shaven -> up to 10
-
-GROOMING/MAKEUP (FEMALE):
-No makeup at all -> MAX 2
-Multiple issues (wrong colours + messy) -> MAX 2
-Two issues (e.g. bold eyes + bold lips) -> MAX 4
-One issue (eye too bold/light, lips too bold/light, wrong colour, single element faded) -> MAX 7
-No issues -> up to 10
-
-SKIN CONDITION:
-Visible blemishes no coverage -> MAX 5
-Minor redness or uneven tone -> MAX 7
-No issues -> up to 10
-
-UNIFORM:
-Any crease or stain -> MAX 4
-Slightly creased no stains -> MAX 6
-No issues -> up to 10
-
-SHOES:
-Any unpolished, scuffed or dirty -> MAX 3
-Slight dulling no scuffs -> MAX 6
-No issues -> up to 10
-
-BODY WEIGHT - Zero tolerance:
-10=Exceptionally slim/fit
-8=Slim healthy
-5=Borderline slim
-3=Any visible excess FAILS
-1=Clearly overweight
-0=Severely overweight
-
-Any weight concern -> 3 or below. Score DOWN.
-
-CATEGORIES:
-1. Hair
-2. IF FEMALE label "Grooming"
-   IF MALE label "Facial Grooming"
-3. Skin Condition
-4. Uniform
-5. Shoes
-6. Body Weight
-
-Return ONLY valid JSON:
-
-{
-  "gender":"female",
-  "overall":"Good",
-  "criteria":[
-    {
-      "label":"Hair",
-      "score":7,
-      "tip":"Tip."
-    },
-    {
-      "label":"Grooming",
-      "score":7,
-      "tip":"Tip."
-    },
-    {
-      "label":"Skin Condition",
-      "score":8,
-      "tip":"Tip."
-    },
-    {
-      "label":"Uniform",
-      "score":8,
-      "tip":"Tip."
-    },
-    {
-      "label":"Shoes",
-      "score":7,
-      "tip":"Tip."
-    },
-    {
-      "label":"Body Weight",
-      "score":7,
-      "tip":"Tip."
-    }
-  ],
-  "summary":"2-3 sentences. Specific differences from reference."
-}
-''';
-      final requestBody = _buildRequestBody(
-        referenceImageBase64: referenceImageBase64,
-        todayImageBase64: todayImageBase64,
-        prompt: prompt,
-      );
-
-      final response = await _sendRequest(requestBody);
-
-      debugPrint(response.body);
-
-      if (response.statusCode != 200) {
-        throw Exception(response.body);
+      if (json["success"] == false) {
+        throw Exception(json["error"] ?? "Apps Script analyze failed.");
       }
 
-      final responseJson = jsonDecode(response.body);
-
-      if (responseJson["content"] == null ||
-          (responseJson["content"] as List).isEmpty) {
-        throw Exception("Claude returned empty content.");
-      }
-
-      final rawText = responseJson["content"][0]["text"];
-
-      final cleanText = rawText
-          .replaceAll("```json", "")
-          .replaceAll("```", "")
-          .trim();
-
-      final resultJson = jsonDecode(cleanText);
-
-      return AssessmentResult.fromJson(resultJson);
+      return AssessmentResult.fromJson(json);
     } catch (e) {
       debugPrint("Assessment Error: $e");
       return null;

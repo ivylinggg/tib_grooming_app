@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../models/assessment_result.dart';
-import '../../services/firebase_service.dart';
+import '../models/assessment_result.dart';
+import '../models/overall_result.dart';
+import '../services/assessment_service.dart';
 
 class AssessmentScreen extends StatefulWidget {
   final String participantId;
@@ -19,7 +20,20 @@ class AssessmentScreen extends StatefulWidget {
 }
 
 class _AssessmentScreenState extends State<AssessmentScreen> {
-  final FirebaseService firebaseService = FirebaseService();
+  final AssessmentService assessmentService = AssessmentService();
+
+  Color _resultColor(String result) {
+    switch (OverallResult.classify(result)) {
+      case OverallResult.excellent:
+        return Colors.green;
+      case OverallResult.good:
+        return Colors.blue;
+      case OverallResult.needsWork:
+        return Colors.orange;
+      case OverallResult.insufficient:
+        return Colors.red;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +79,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
             child: ListTile(
               leading: const Icon(Icons.score),
               title: const Text("Total Score"),
-              subtitle: Text("${widget.assessmentResult.totalScore} / 100"),
+              subtitle: Text("${widget.assessmentResult.totalScore} / 60"),
             ),
           ),
 
@@ -144,24 +158,10 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
               final navigator = Navigator.of(context);
               final messenger = ScaffoldMessenger.of(context);
 
-              final success = await firebaseService.saveAssessment(
+              final success = await assessmentService.saveAssessment(
                 participantId: widget.participantId,
                 participantName: widget.participantName,
-
-                totalScore: score,
-                overall: result,
-
-                summary: widget.assessmentResult.summary,
-                suggestion: widget.assessmentResult.suggestion,
-                referencePhotoUrl:
-                    widget.assessmentResult.referencePhotoUrl ?? "",
-                todayPhotoUrl: widget.assessmentResult.todayPhotoUrl ?? "",
-
-                criteria: widget.assessmentResult.criteria
-                    .map(
-                      (e) => {"label": e.label, "score": e.score, "tip": e.tip},
-                    )
-                    .toList(),
+                result: widget.assessmentResult,
               );
 
               if (!mounted) return;
@@ -202,10 +202,10 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
 
                             Text(
                               result,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.green,
+                                color: _resultColor(result),
                               ),
                             ),
 
@@ -219,7 +219,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                             const SizedBox(height: 8),
 
                             Text(
-                              "$score / 100",
+                              "$score / 60",
                               style: const TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,

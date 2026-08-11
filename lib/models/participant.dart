@@ -24,6 +24,31 @@ class Participant {
   /// Firestore Timestamp
   final DateTime? createdAt;
 
+  /// Which Staff *login account* (a [Participant] has no login of its
+  /// own -- see the class-level distinction in AuthService/AppUser)
+  /// registered this record, if known. Additive: written by
+  /// FirebaseService.registerParticipant() going forward, but never
+  /// backfilled onto records created before this field existed --
+  /// those stay null, which the UI shows as "Unknown / Not recorded"
+  /// rather than guessing an owner. Never used to imply the current
+  /// Staff account handled a record just because it's null; null means
+  /// exactly "not recorded", nothing more specific than that.
+  final String? createdByUid;
+
+  /// The registering Staff account's own login Staff ID
+  /// (AppUser.staffId) at the time of registration -- a different
+  /// identifier from this Participant's own [staffId], and commonly
+  /// null at registration time since AppUser.staffId is normally only
+  /// set once that account completes its own first assessment. Same
+  /// historical-null caveat as [createdByUid].
+  final String? createdByStaffId;
+
+  /// The registering Staff account's display name at the time of
+  /// registration (a snapshot, not a live lookup -- if that Staff
+  /// account is later renamed, this does not change). Same
+  /// historical-null caveat as [createdByUid].
+  final String? createdByName;
+
   const Participant({
     required this.id,
     required this.fullName,
@@ -36,6 +61,9 @@ class Participant {
     this.assessmentCount = 0,
     this.isActive = true,
     this.createdAt,
+    this.createdByUid,
+    this.createdByStaffId,
+    this.createdByName,
   });
 
   factory Participant.fromJson(Map<String, dynamic> json) {
@@ -51,6 +79,9 @@ class Participant {
       assessmentCount: (json["assessmentCount"] as num?)?.toInt() ?? 0,
       isActive: json["isActive"] ?? true,
       createdAt: json["createdAt"] is DateTime ? json["createdAt"] : null,
+      createdByUid: json["createdByUid"]?.toString(),
+      createdByStaffId: json["createdByStaffId"]?.toString(),
+      createdByName: json["createdByName"]?.toString(),
     );
   }
 
@@ -67,34 +98,9 @@ class Participant {
       "assessmentCount": assessmentCount,
       "isActive": isActive,
       "createdAt": createdAt,
+      "createdByUid": createdByUid,
+      "createdByStaffId": createdByStaffId,
+      "createdByName": createdByName,
     };
-  }
-
-  Participant copyWith({
-    String? id,
-    String? fullName,
-    String? staffId,
-    String? trainerName,
-    String? registrationDate,
-    String? photoUrl,
-    int? latestScore,
-    String? latestResult,
-    int? assessmentCount,
-    bool? isActive,
-    DateTime? createdAt,
-  }) {
-    return Participant(
-      id: id ?? this.id,
-      fullName: fullName ?? this.fullName,
-      staffId: staffId ?? this.staffId,
-      trainerName: trainerName ?? this.trainerName,
-      registrationDate: registrationDate ?? this.registrationDate,
-      photoUrl: photoUrl ?? this.photoUrl,
-      latestScore: latestScore ?? this.latestScore,
-      latestResult: latestResult ?? this.latestResult,
-      assessmentCount: assessmentCount ?? this.assessmentCount,
-      isActive: isActive ?? this.isActive,
-      createdAt: createdAt ?? this.createdAt,
-    );
   }
 }

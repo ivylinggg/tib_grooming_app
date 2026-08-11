@@ -1,13 +1,19 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../models/app_user.dart';
 import '../../models/participant.dart';
+import '../../services/auth_service.dart';
 import '../../services/firebase_service.dart';
 import '../ai/ai_assessment_screen.dart';
+import '../auth/login_screen.dart';
+import '../auth/role_selection_screen.dart';
 import '../register/register_screen.dart';
+import 'participant_profile_screen.dart';
 
 class ParticipantManagementScreen extends StatefulWidget {
   const ParticipantManagementScreen({super.key});
@@ -20,10 +26,58 @@ class ParticipantManagementScreen extends StatefulWidget {
 class _ParticipantManagementScreenState
     extends State<ParticipantManagementScreen> {
   final FirebaseService _firebaseService = FirebaseService();
+  final AuthService _authService = AuthService();
 
   final TextEditingController _searchController = TextEditingController();
 
   String _keyword = "";
+
+  bool _checkingAccess = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAdminAccess();
+  }
+
+  /// This screen previously had no role check at all beyond being
+  /// reachable only from DashboardScreen's buttons -- reachability
+  /// through the UI is not an access control. Same guard pattern as
+  /// DashboardScreen._checkAdminAccess: not-signed-in -> Login;
+  /// signed-in but not Admin -> Role Selection; only a confirmed
+  /// `role: admin` account loads participant data.
+  Future<void> _checkAdminAccess() async {
+    if (FirebaseAuth.instance.currentUser == null) {
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+      return;
+    }
+
+    AppUser? appUser;
+    try {
+      appUser = await _authService.getCurrentAppUser();
+    } catch (_) {
+      // Falls through to the role check below, which treats a failed
+      // lookup the same as "not Admin" -- fail closed, not open.
+    }
+
+    if (!mounted) return;
+
+    if (appUser == null || appUser.role != UserRole.admin) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
+      );
+      return;
+    }
+
+    setState(() {
+      _checkingAccess = false;
+    });
+  }
 
   @override
   void dispose() {
@@ -112,6 +166,13 @@ class _ParticipantManagementScreenState
 
   @override
   Widget build(BuildContext context) {
+    if (_checkingAccess) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF5F7FA),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
 
@@ -215,6 +276,19 @@ class _ParticipantManagementScreenState
                   return date.contains(DateTime.now().day.toString());
                 }).length;
 
+                // No fixed height (was `height: 105`, with a Spacer()
+                // to push content to the bottom) -- same overflow cause
+                // as DashboardScreen's _OverviewCard had: any title
+                // long enough to wrap, or a larger device text-scale
+                // setting, pushed past that fixed box. Sizing to
+                // content (`mainAxisSize: MainAxisSize.min`, a plain
+                // SizedBox gap instead of Spacer -- Spacer needs a
+                // bounded height to expand into, which content-sized
+                // Column no longer has) means it can't overflow itself.
+                // Not wrapping this Row itself in
+                // crossAxisAlignment.stretch either -- see
+                // DashboardScreen/StatisticsScreen's own doc comments
+                // for why that combination crashes inside a scrollable.
                 Widget card(
                   String title,
                   String value,
@@ -223,7 +297,6 @@ class _ParticipantManagementScreenState
                 ) {
                   return Expanded(
                     child: Container(
-                      height: 105,
                       margin: const EdgeInsets.symmetric(horizontal: 5),
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -238,11 +311,12 @@ class _ParticipantManagementScreenState
                         ],
                       ),
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Icon(icon, color: color, size: 26),
 
-                          const Spacer(),
+                          const SizedBox(height: 12),
 
                           Text(
                             value,
@@ -256,6 +330,8 @@ class _ParticipantManagementScreenState
 
                           Text(
                             title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: Colors.grey,
                               fontSize: 12,
@@ -420,352 +496,387 @@ class _ParticipantManagementScreenState
 
                               const SizedBox(height: 20),
 
-                              Row(
+                              Column(
                                 children: [
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      icon: const Icon(Icons.visibility),
-                                      label: const Text("View"),
-                                      onPressed: () {
-                                        showDialog(
-                                          context: context,
-                                          builder: (_) {
-                                            return AlertDialog(
-                                              title: const Text(
-                                                "Participant Details",
-                                              ),
-
-                                              content: SingleChildScrollView(
-                                                child: Column(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Center(
-                                                      child: CircleAvatar(
-                                                        radius: 50,
-                                                        backgroundImage:
-                                                            participant
-                                                                .photoUrl
-                                                                .isNotEmpty
-                                                            ? NetworkImage(
-                                                                participant
-                                                                    .photoUrl,
-                                                              )
-                                                            : null,
-                                                        child:
-                                                            participant
-                                                                .photoUrl
-                                                                .isEmpty
-                                                            ? const Icon(
-                                                                Icons.person,
-                                                                size: 40,
-                                                              )
-                                                            : null,
-                                                      ),
-                                                    ),
-
-                                                    const SizedBox(height: 20),
-
-                                                    Text(
-                                                      "Name : ${participant.fullName}",
-                                                    ),
-                                                    Text(
-                                                      "Staff ID : ${participant.staffId}",
-                                                    ),
-                                                    Text(
-                                                      "Trainer : ${participant.trainerName}",
-                                                    ),
-                                                    Text(
-                                                      "Registration Date : ${participant.registrationDate}",
-                                                    ),
-
-                                                    const SizedBox(height: 16),
-
-                                                    Text(
-                                                      "Latest Score : ${participant.latestScore}",
-                                                    ),
-
-                                                    Text(
-                                                      "Latest Result : ${participant.latestResult}",
-                                                    ),
-
-                                                    Text(
-                                                      "Assessment Count : ${participant.assessmentCount}",
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () {
-                                                    Navigator.pop(context);
-                                                  },
-                                                  child: const Text("Close"),
-                                                ),
-                                              ],
-                                            );
-                                          },
-                                        );
-                                      },
-                                    ),
-                                  ),
-
-                                  const SizedBox(width: 10),
-
-                                  Expanded(
-                                    child: ElevatedButton.icon(
-                                      icon: const Icon(Icons.edit),
-                                      label: const Text("Edit"),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.orange,
-                                        foregroundColor: Colors.white,
-                                      ),
-                                      onPressed: () {
-                                        final nameController =
-                                            TextEditingController(
-                                              text: participant.fullName,
-                                            );
-
-                                        final trainerController =
-                                            TextEditingController(
-                                              text: participant.trainerName,
-                                            );
-
-                                        File? selectedImage;
-
-                                        showDialog(
-                                          context: context,
-                                          builder: (_) {
-                                            return StatefulBuilder(
-                                              builder: (context, setDialogState) {
-                                                return AlertDialog(
-                                                  title: const Text(
-                                                    "Edit Participant",
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: SizedBox(
+                                          height: 46,
+                                          child: OutlinedButton.icon(
+                                            icon: const Icon(
+                                              Icons.visibility,
+                                              size: 18,
+                                            ),
+                                            label: const Text(
+                                              "View",
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                            style: OutlinedButton.styleFrom(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 4,
                                                   ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            ),
+                                            onPressed: () async {
+                                              await Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      ParticipantProfileScreen(
+                                                        staffId:
+                                                            participant.staffId,
+                                                      ),
+                                                ),
+                                              );
 
-                                                  content: SingleChildScrollView(
-                                                    child: Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        GestureDetector(
-                                                          onTap: () async {
-                                                            final picker =
-                                                                ImagePicker();
+                                              if (!context.mounted) return;
+                                              setState(() {});
+                                            },
+                                          ),
+                                        ),
+                                      ),
 
-                                                            final image = await picker
-                                                                .pickImage(
-                                                                  source:
-                                                                      ImageSource
-                                                                          .gallery,
-                                                                  imageQuality:
-                                                                      80,
-                                                                );
+                                      const SizedBox(width: 10),
 
-                                                            if (image == null) {
-                                                              return;
-                                                            }
+                                      Expanded(
+                                        child: SizedBox(
+                                          height: 46,
+                                          child: ElevatedButton.icon(
+                                            icon: const Icon(
+                                              Icons.edit,
+                                              size: 18,
+                                            ),
+                                            label: const Text(
+                                              "Edit",
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.orange,
+                                              foregroundColor: Colors.white,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 4,
+                                                  ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            ),
+                                            onPressed: () {
+                                              final nameController =
+                                                  TextEditingController(
+                                                    text: participant.fullName,
+                                                  );
 
-                                                            setDialogState(() {
-                                                              selectedImage =
-                                                                  File(
-                                                                    image.path,
+                                              final trainerController =
+                                                  TextEditingController(
+                                                    text:
+                                                        participant.trainerName,
+                                                  );
+
+                                              File? selectedImage;
+
+                                              showDialog(
+                                                context: context,
+                                                builder: (_) {
+                                                  return StatefulBuilder(
+                                                    builder: (context, setDialogState) {
+                                                      return AlertDialog(
+                                                        title: const Text(
+                                                          "Edit Participant",
+                                                        ),
+
+                                                        content: SingleChildScrollView(
+                                                          child: Column(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: [
+                                                              GestureDetector(
+                                                                onTap: () async {
+                                                                  final picker =
+                                                                      ImagePicker();
+
+                                                                  final image = await picker.pickImage(
+                                                                    source: ImageSource
+                                                                        .gallery,
+                                                                    imageQuality:
+                                                                        80,
                                                                   );
-                                                            });
-                                                          },
 
-                                                          child: CircleAvatar(
-                                                            radius: 45,
-                                                            backgroundImage:
-                                                                selectedImage !=
-                                                                    null
-                                                                ? FileImage(
-                                                                    selectedImage!,
-                                                                  )
-                                                                : participant
-                                                                      .photoUrl
-                                                                      .isNotEmpty
-                                                                ? NetworkImage(
-                                                                    participant
-                                                                        .photoUrl,
-                                                                  )
-                                                                : null,
-                                                            child:
-                                                                selectedImage ==
-                                                                        null &&
-                                                                    participant
-                                                                        .photoUrl
-                                                                        .isEmpty
-                                                                ? const Icon(
-                                                                    Icons
-                                                                        .camera_alt,
-                                                                  )
-                                                                : null,
+                                                                  if (image ==
+                                                                      null) {
+                                                                    return;
+                                                                  }
+
+                                                                  setDialogState(() {
+                                                                    selectedImage =
+                                                                        File(
+                                                                          image
+                                                                              .path,
+                                                                        );
+                                                                  });
+                                                                },
+
+                                                                child: CircleAvatar(
+                                                                  radius: 45,
+                                                                  backgroundImage:
+                                                                      selectedImage !=
+                                                                          null
+                                                                      ? FileImage(
+                                                                          selectedImage!,
+                                                                        )
+                                                                      : participant
+                                                                            .photoUrl
+                                                                            .isNotEmpty
+                                                                      ? NetworkImage(
+                                                                          participant
+                                                                              .photoUrl,
+                                                                        )
+                                                                      : null,
+                                                                  child:
+                                                                      selectedImage ==
+                                                                              null &&
+                                                                          participant
+                                                                              .photoUrl
+                                                                              .isEmpty
+                                                                      ? const Icon(
+                                                                          Icons
+                                                                              .camera_alt,
+                                                                        )
+                                                                      : null,
+                                                                ),
+                                                              ),
+
+                                                              const SizedBox(
+                                                                height: 20,
+                                                              ),
+
+                                                              TextField(
+                                                                controller:
+                                                                    nameController,
+                                                                decoration:
+                                                                    const InputDecoration(
+                                                                      labelText:
+                                                                          "Full Name",
+                                                                    ),
+                                                              ),
+
+                                                              const SizedBox(
+                                                                height: 15,
+                                                              ),
+
+                                                              TextField(
+                                                                controller:
+                                                                    trainerController,
+                                                                decoration:
+                                                                    const InputDecoration(
+                                                                      labelText:
+                                                                          "Trainer Name",
+                                                                    ),
+                                                              ),
+                                                            ],
                                                           ),
                                                         ),
 
-                                                        const SizedBox(
-                                                          height: 20,
-                                                        ),
-
-                                                        TextField(
-                                                          controller:
-                                                              nameController,
-                                                          decoration:
-                                                              const InputDecoration(
-                                                                labelText:
-                                                                    "Full Name",
-                                                              ),
-                                                        ),
-
-                                                        const SizedBox(
-                                                          height: 15,
-                                                        ),
-
-                                                        TextField(
-                                                          controller:
-                                                              trainerController,
-                                                          decoration:
-                                                              const InputDecoration(
-                                                                labelText:
-                                                                    "Trainer Name",
-                                                              ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () {
-                                                        Navigator.pop(context);
-                                                      },
-                                                      child: const Text(
-                                                        "Cancel",
-                                                      ),
-                                                    ),
-
-                                                    ElevatedButton(
-                                                      child: const Text("Save"),
-
-                                                      onPressed: () async {
-                                                        final navigator =
-                                                            Navigator.of(
-                                                              context,
-                                                            );
-                                                        final messenger =
-                                                            ScaffoldMessenger.of(
-                                                              context,
-                                                            );
-                                                        String photoUrl =
-                                                            participant
-                                                                .photoUrl;
-
-                                                        if (selectedImage !=
-                                                            null) {
-                                                          final uploadedUrl =
-                                                              await _firebaseService
-                                                                  .uploadPhoto(
-                                                                    staff: participant
-                                                                        .staffId,
-                                                                    image:
-                                                                        selectedImage!,
-                                                                  );
-
-                                                          if (uploadedUrl !=
-                                                              null) {
-                                                            photoUrl =
-                                                                uploadedUrl;
-                                                          }
-                                                        }
-
-                                                        final success = await _firebaseService
-                                                            .updateParticipant(
-                                                              staff: participant
-                                                                  .staffId,
-                                                              name:
-                                                                  nameController
-                                                                      .text
-                                                                      .trim(),
-                                                              trainer:
-                                                                  trainerController
-                                                                      .text
-                                                                      .trim(),
-                                                              registrationDate:
-                                                                  participant
-                                                                      .registrationDate,
-                                                              photoUrl:
-                                                                  photoUrl,
-                                                            );
-
-                                                        if (!mounted) return;
-
-                                                        navigator.pop();
-
-                                                        messenger.showSnackBar(
-                                                          SnackBar(
-                                                            content: Text(
-                                                              success
-                                                                  ? "Participant updated successfully."
-                                                                  : "Update failed.",
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed: () {
+                                                              Navigator.pop(
+                                                                context,
+                                                              );
+                                                            },
+                                                            child: const Text(
+                                                              "Cancel",
                                                             ),
                                                           ),
-                                                        );
-                                                      },
-                                                    ),
-                                                  ],
-                                                );
-                                              },
-                                            );
-                                          },
-                                        );
-                                      },
-                                    ),
-                                  ),
 
-                                  const SizedBox(width: 10),
+                                                          ElevatedButton(
+                                                            child: const Text(
+                                                              "Save",
+                                                            ),
 
-                                  Expanded(
-                                    child: ElevatedButton.icon(
-                                      icon: const Icon(Icons.assignment),
-                                      label: const Text("Assess"),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.green,
-                                        foregroundColor: Colors.white,
-                                      ),
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => AIAssessmentScreen(
-                                              participantId:
-                                                  participant.staffId,
-                                              participantName:
-                                                  participant.fullName,
-                                            ),
+                                                            onPressed: () async {
+                                                              final navigator =
+                                                                  Navigator.of(
+                                                                    context,
+                                                                  );
+                                                              final messenger =
+                                                                  ScaffoldMessenger.of(
+                                                                    context,
+                                                                  );
+                                                              String photoUrl =
+                                                                  participant
+                                                                      .photoUrl;
+
+                                                              if (selectedImage !=
+                                                                  null) {
+                                                                final uploadResult =
+                                                                    await _firebaseService.uploadPhoto(
+                                                                      staff: participant
+                                                                          .staffId,
+                                                                      image:
+                                                                          selectedImage!,
+                                                                    );
+
+                                                                if (uploadResult
+                                                                    .success) {
+                                                                  photoUrl =
+                                                                      uploadResult
+                                                                          .imageUrl!;
+                                                                } else {
+                                                                  if (!mounted) {
+                                                                    return;
+                                                                  }
+
+                                                                  messenger.showSnackBar(
+                                                                    SnackBar(
+                                                                      content: Text(
+                                                                        "Photo upload failed: ${uploadResult.errorMessage}",
+                                                                      ),
+                                                                      backgroundColor:
+                                                                          Colors
+                                                                              .red,
+                                                                    ),
+                                                                  );
+                                                                  return;
+                                                                }
+                                                              }
+
+                                                              final success = await _firebaseService.updateParticipant(
+                                                                staff:
+                                                                    participant
+                                                                        .staffId,
+                                                                name:
+                                                                    nameController
+                                                                        .text
+                                                                        .trim(),
+                                                                trainer:
+                                                                    trainerController
+                                                                        .text
+                                                                        .trim(),
+                                                                registrationDate:
+                                                                    participant
+                                                                        .registrationDate,
+                                                                photoUrl:
+                                                                    photoUrl,
+                                                              );
+                                                              // AFTER
+                                                              if (!mounted) {
+                                                                return;
+                                                              }
+
+                                                              navigator.pop();
+
+                                                              messenger.showSnackBar(
+                                                                SnackBar(
+                                                                  content: Text(
+                                                                    success
+                                                                        ? "Participant updated successfully."
+                                                                        : "Update failed.",
+                                                                  ),
+                                                                ),
+                                                              );
+                                                            },
+                                                          ),
+                                                        ],
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                              );
+                                            },
                                           ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-
-                                  const SizedBox(width: 10),
-
-                                  Expanded(
-                                    child: ElevatedButton.icon(
-                                      icon: const Icon(Icons.delete),
-                                      label: const Text("Delete"),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.red,
-                                        foregroundColor: Colors.white,
+                                        ),
                                       ),
-                                      onPressed: () {
-                                        _deleteParticipant(participant);
-                                      },
-                                    ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: SizedBox(
+                                          height: 46,
+                                          child: ElevatedButton.icon(
+                                            icon: const Icon(
+                                              Icons.assignment,
+                                              size: 18,
+                                            ),
+                                            label: const Text(
+                                              "Assessment",
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.green,
+                                              foregroundColor: Colors.white,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 4,
+                                                  ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            ),
+                                            onPressed: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      AIAssessmentScreen(
+                                                        participantId:
+                                                            participant.staffId,
+                                                        participantName:
+                                                            participant
+                                                                .fullName,
+                                                      ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: SizedBox(
+                                          height: 46,
+                                          child: ElevatedButton.icon(
+                                            icon: const Icon(
+                                              Icons.delete,
+                                              size: 18,
+                                            ),
+                                            label: const Text(
+                                              "Delete",
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.red,
+                                              foregroundColor: Colors.white,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 4,
+                                                  ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            ),
+                                            onPressed: () {
+                                              _deleteParticipant(participant);
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),

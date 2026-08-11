@@ -3,7 +3,10 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/assessment_result.dart';
+import '../models/overall_result.dart';
 import '../screens/checkin/checkin_screen.dart';
+import '../services/auth_service.dart';
+import 'staff/staff_dashboard_screen.dart';
 
 class ResultScreen extends StatelessWidget {
   final AssessmentResult result;
@@ -11,13 +14,15 @@ class ResultScreen extends StatelessWidget {
   const ResultScreen({super.key, required this.result});
 
   Color get resultColor {
-    switch (result.overall.toUpperCase()) {
-      case 'PASS':
+    switch (OverallResult.classify(result.overall)) {
+      case OverallResult.excellent:
         return Colors.green;
-      case 'FAIL':
-        return Colors.red;
-      default:
+      case OverallResult.good:
+        return Colors.blue;
+      case OverallResult.needsWork:
         return Colors.orange;
+      case OverallResult.insufficient:
+        return Colors.red;
     }
   }
 
@@ -129,34 +134,71 @@ class ResultScreen extends StatelessWidget {
 
             const SizedBox(height: 30),
 
-            ElevatedButton.icon(
-              icon: const Icon(Icons.visibility),
-              label: const Text("View Report"),
-              onPressed: () async {
-                if (result.shareLink.isEmpty) return;
+            // shareLink is never populated by the current Apps Script
+            // analyze response -- these actions have nothing to open or
+            // share yet, so they're hidden rather than shown as buttons
+            // that silently do nothing when tapped.
+            if (result.shareLink.isNotEmpty) ...[
+              ElevatedButton.icon(
+                icon: const Icon(Icons.visibility),
+                label: const Text("View Report"),
+                onPressed: () async {
+                  await launchUrl(
+                    Uri.parse(result.shareLink),
+                    mode: LaunchMode.externalApplication,
+                  );
+                },
+              ),
 
-                await launchUrl(
-                  Uri.parse(result.shareLink),
-                  mode: LaunchMode.externalApplication,
+              const SizedBox(height: 12),
+
+              ElevatedButton.icon(
+                icon: const Icon(Icons.share),
+                label: const Text("Share Report"),
+                onPressed: () {
+                  Share.share(result.shareLink);
+                },
+              ),
+
+              const SizedBox(height: 12),
+            ],
+
+            ElevatedButton.icon(
+              icon: const Icon(Icons.dashboard_outlined),
+              label: const Text("Continue to Staff Dashboard"),
+              onPressed: () async {
+                final navigator = Navigator.of(context);
+                final messenger = ScaffoldMessenger.of(context);
+
+                final appUser = await AuthService().getCurrentAppUser();
+
+                if (!context.mounted) return;
+
+                if (appUser == null) {
+                  // Reached from the anonymous, no-auth Cabin Crew
+                  // self-service check-in flow -- there's no signed-in
+                  // Staff session to build a dashboard for.
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text("Sign in as Staff to view your dashboard."),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+
+                navigator.pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (_) => StaffDashboardScreen(user: appUser),
+                  ),
+                  (route) => false,
                 );
               },
             ),
 
             const SizedBox(height: 12),
 
-            ElevatedButton.icon(
-              icon: const Icon(Icons.share),
-              label: const Text("Share Report"),
-              onPressed: () {
-                if (result.shareLink.isEmpty) return;
-
-                Share.share(result.shareLink);
-              },
-            ),
-
-            const SizedBox(height: 12),
-
-            ElevatedButton.icon(
+            OutlinedButton.icon(
               icon: const Icon(Icons.refresh),
               label: const Text("New Check-in"),
               onPressed: () {

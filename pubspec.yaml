@@ -22,9 +22,24 @@ dependencies:
   # Local Storage
   shared_preferences: ^2.5.5
 
+  # Secure local storage for "Remember me" -- the saved password never
+  # goes into SharedPreferences (plaintext); this backs it with the
+  # Android Keystore instead.
+  flutter_secure_storage: ^9.2.2
+
   # Camera
   camera: ^0.11.0+2
   image_picker: ^1.2.3
+
+  # Real Android system picker for Gallery/Photos AND Files/document
+  # browsing (image_picker's gallery source only ever opens the Photos
+  # picker, not Files).
+  file_picker: ^8.1.2
+
+  # Real Android runtime permission requests (camera) with the ability
+  # to distinguish "denied" from "permanently denied" and open the
+  # system App Settings screen for the latter.
+  permission_handler: ^11.3.1
 
   # AI
   google_mlkit_face_detection: ^0.13.1
@@ -40,6 +55,7 @@ dependencies:
   # Firebase
   firebase_core: ^4.12.1
   cloud_firestore: ^6.7.1
+  firebase_auth: ^6.5.6
 
   # Charts
   fl_chart: ^0.69.0
