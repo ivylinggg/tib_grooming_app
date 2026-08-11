@@ -253,7 +253,7 @@ class PdfService {
           ),
         ),
         pw.SizedBox(height: 8),
-        pw.Table.fromTextArray(
+        pw.TableHelper.fromTextArray(
           headers: const ["Criterion", "Score", "Note"],
           data: criteria
               .map(
