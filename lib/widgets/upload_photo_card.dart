@@ -1,9 +1,20 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
+import '../models/captured_image.dart';
+import 'captured_image_view.dart';
+
+/// Reference Photo (Best Appearance), for RegisterScreen -- Take Photo
+/// and Gallery/Files are both real entry points into the same photo
+/// (never two different fields), and both are validated the same way by
+/// the caller ([RegisterScreen]) before this widget ever shows the
+/// result: [image] is only ever non-null here once
+/// [AssessmentApi.detectPerson]'s full-body check has already passed --
+/// see RegisterScreen's class doc comment. [isValidating] covers the
+/// brief window between "a photo was picked" and "the full-body check
+/// finished".
 class UploadPhotoCard extends StatelessWidget {
-  final File? image;
+  final CapturedImage? image;
+  final bool isValidating;
   final VoidCallback onTakePhoto;
   final VoidCallback onPickGallery;
   final VoidCallback? onRemovePhoto;
@@ -14,6 +25,7 @@ class UploadPhotoCard extends StatelessWidget {
     required this.onTakePhoto,
     required this.onPickGallery,
     this.onRemovePhoto,
+    this.isValidating = false,
   });
 
   @override
@@ -71,7 +83,19 @@ class UploadPhotoCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: const Color(0xFFD6DCE8), width: 2),
             ),
-            child: image == null
+            child: isValidating
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 30),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 15),
+                        Text("Validating photo..."),
+                      ],
+                    ),
+                  )
+                : image == null
                 ? Padding(
                     padding: const EdgeInsets.symmetric(
                       vertical: 30,
@@ -101,7 +125,9 @@ class UploadPhotoCard extends StatelessWidget {
                         SizedBox(height: 10),
 
                         Text(
-                          "This will be the standard for all future comparisons.",
+                          "Please take/upload a clear, full-body photo "
+                          "(head to feet) -- this will be the standard "
+                          "for all future comparisons.",
                           textAlign: TextAlign.center,
                           style: TextStyle(color: Colors.grey, height: 1.4),
                         ),
@@ -133,8 +159,8 @@ class UploadPhotoCard extends StatelessWidget {
                   )
                 : ClipRRect(
                     borderRadius: BorderRadius.circular(16),
-                    child: Image.file(
-                      image!,
+                    child: CapturedImageView(
+                      image: image!,
                       width: double.infinity,
                       fit: BoxFit.cover,
                     ),
@@ -147,7 +173,7 @@ class UploadPhotoCard extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: onTakePhoto,
+                  onPressed: isValidating ? null : onTakePhoto,
                   icon: const Icon(Icons.photo_camera_outlined),
                   label: const Text("Take Photo"),
                 ),
@@ -157,7 +183,7 @@ class UploadPhotoCard extends StatelessWidget {
 
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: onPickGallery,
+                  onPressed: isValidating ? null : onPickGallery,
                   icon: const Icon(Icons.photo_library_outlined),
                   label: const Text("From Gallery/Files"),
                 ),

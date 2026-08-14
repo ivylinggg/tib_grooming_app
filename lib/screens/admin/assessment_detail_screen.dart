@@ -36,15 +36,15 @@ import '../auth/role_selection_screen.dart';
 /// Deleting a record stays Admin-only -- the delete action is hidden
 /// entirely for a Staff viewer, regardless of whose assessment it is.
 ///
-/// Export PDF and Share Result (see [_exportPdf]/[_shareResult]) are
-/// only ever reachable once [_load] has already confirmed the viewer is
-/// allowed to see this specific assessment -- there is no separate
-/// permission check for those two actions because there is no
-/// additional privilege they need beyond "can view this screen at
-/// all". A Staff account can therefore never export/share another
-/// participant's result by guessing an assessment ID: [_load] would
-/// have already redirected them to an error state before either button
-/// ever renders.
+/// Export PDF, Download PDF, and Share Result (see [_exportPdf]/
+/// [_downloadPdf]/[_shareResult]) are only ever reachable once [_load]
+/// has already confirmed the viewer is allowed to see this specific
+/// assessment -- there is no separate permission check for those
+/// actions because there is no additional privilege they need beyond
+/// "can view this screen at all". A Staff account can therefore never
+/// export/download/share another participant's result by guessing an
+/// assessment ID: [_load] would have already redirected them to an
+/// error state before any of those buttons ever render.
 class AssessmentDetailScreen extends StatefulWidget {
   final String assessmentId;
 
@@ -87,6 +87,7 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
   SharingStatus _sharing = const SharingStatus();
 
   bool _exportingPdf = false;
+  bool _downloadingPdf = false;
   bool _sharingBusy = false;
 
   @override
@@ -206,12 +207,14 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
     });
   }
 
-  /// Generates a real PDF (PdfService) and hands it to the OS
-  /// share/save sheet. The success message only ever shows after
-  /// `Printing.sharePdf` completes without throwing -- by then the file
-  /// has genuinely been written to a real temporary file and the share
-  /// sheet has been invoked; nothing here reports success just because
-  /// a widget rendered.
+  /// Generates a real PDF (PdfService) and hands it to the OS's native
+  /// Save dialog. "PDF saved successfully" only ever shows after
+  /// [PdfExportResult.outcome] comes back [PdfExportOutcome.saved] --
+  /// by then the file has genuinely been written to wherever the user
+  /// picked. The user closing the Save dialog without choosing a
+  /// location ([PdfExportOutcome.cancelled]) shows a plain
+  /// acknowledgement instead, never a success or an error message --
+  /// nothing here reports success just because a widget rendered.
   Future<void> _exportPdf() async {
     if (_assessment == null || _exportingPdf) return;
 
@@ -222,16 +225,29 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
     final messenger = ScaffoldMessenger.of(context);
 
     try {
-      await PdfService().exportAndShareAssessmentPdf(
+      final result = await PdfService().exportAssessmentPdf(
         assessmentData: _assessment!,
         trainerName: _trainerName,
       );
 
       if (!mounted) return;
 
-      messenger.showSnackBar(
-        const SnackBar(content: Text("PDF exported successfully.")),
-      );
+      if (result.outcome == PdfExportOutcome.cancelled) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text("PDF export cancelled.")),
+        );
+      } else {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              result.savedPath != null
+                  ? "PDF saved successfully to:\n${result.savedPath}"
+                  : "PDF saved successfully.",
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
 
@@ -245,6 +261,63 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
       if (mounted) {
         setState(() {
           _exportingPdf = false;
+        });
+      }
+    }
+  }
+
+  /// "Download PDF" -- a second, independent action from [_exportPdf]
+  /// (see PdfService.downloadAssessmentPdf's doc comment for the exact
+  /// difference). Never `Printing.sharePdf()`/a share sheet: a real PDF
+  /// is generated and written to a real, user-accessible location, and
+  /// "PDF downloaded successfully" only ever shows after
+  /// [PdfExportResult.outcome] comes back [PdfExportOutcome.saved].
+  Future<void> _downloadPdf() async {
+    if (_assessment == null || _downloadingPdf) return;
+
+    setState(() {
+      _downloadingPdf = true;
+    });
+
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      final result = await PdfService().downloadAssessmentPdf(
+        assessmentData: _assessment!,
+        trainerName: _trainerName,
+      );
+
+      if (!mounted) return;
+
+      if (result.outcome == PdfExportOutcome.cancelled) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text("PDF download cancelled.")),
+        );
+      } else {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              result.savedPath != null
+                  ? "PDF downloaded successfully to:\n${result.savedPath}"
+                  : "PDF downloaded successfully.",
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text("Could not download PDF: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _downloadingPdf = false;
         });
       }
     }
@@ -558,7 +631,7 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "Overall Score: $score%",
+                    "Overall Score: $score/60",
                     style: const TextStyle(fontSize: 16),
                   ),
                 ],
@@ -667,6 +740,25 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1F3D73),
               foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          OutlinedButton.icon(
+            onPressed: _downloadingPdf ? null : _downloadPdf,
+            icon: _downloadingPdf
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.download_outlined),
+            label: Text(
+              _downloadingPdf ? "Downloading PDF..." : "Download PDF",
+            ),
+            style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
           ),

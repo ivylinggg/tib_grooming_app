@@ -1,10 +1,9 @@
-import 'dart:io';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import '../api/google_drive_api.dart';
 import '../models/assessment_result.dart';
+import '../models/captured_image.dart';
 import 'auth_service.dart';
 import 'firebase_service.dart';
 
@@ -42,7 +41,7 @@ class AssessmentService {
   /// FirebaseService.uploadPhoto.
   Future<DriveUploadResult> uploadAssessmentPhoto({
     required String participantId,
-    required File image,
+    required CapturedImage image,
   }) {
     return GoogleDriveApi.uploadImage(
       image: image,
@@ -85,7 +84,7 @@ class AssessmentService {
   Future<AssessmentResult?> prepareAssessment({
     required AssessmentResult result,
     required String referencePhotoUrl,
-    required File todayPhoto,
+    required CapturedImage todayPhoto,
     required String participantId,
     String? staffId,
     String? participantName,

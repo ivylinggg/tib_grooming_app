@@ -1,12 +1,12 @@
-import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../../api/assessment_api.dart';
 import '../../api/google_drive_api.dart';
+import '../../models/captured_image.dart';
 import '../../models/register_result.dart';
 import '../../services/firebase_service.dart';
 import '../../services/image_service.dart';
-import '../../services/photo_validation_service.dart';
 import '../../widgets/hero_banner.dart';
 import '../../widgets/participant_card.dart';
 import '../../widgets/primary_button.dart';
@@ -42,6 +42,20 @@ String _messageFor(RegisterResult result) {
   }
 }
 
+/// Register Participant -- Reference Photo.
+///
+/// STRICT COMPANY REQUIREMENT: the Reference Photo must be a FULL-BODY
+/// photo (head to feet), exactly like every other appearance photo in
+/// this app. Both Take Photo AND Gallery/Files are real entry points
+/// into the same photo -- both are validated the same way, by the same
+/// authoritative validator every other capture path in this app already
+/// uses: [AssessmentApi.detectPerson] (Apps Script/Claude.gs's
+/// detectPersonImage -- one person, standing, front-facing, full body,
+/// head to shoes, no cropping). There is no second, conflicting
+/// validation system here -- this used to be gated by
+/// PhotoValidationService's on-device ML Kit face-only check instead,
+/// which never enforced full-body framing at all; that gate has been
+/// replaced, not layered on top of, for this exact reason.
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -58,11 +72,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   final ImageService imageService = ImageService();
   final FirebaseService firebaseService = FirebaseService();
-  final PhotoValidationService photoValidationService =
-      PhotoValidationService();
+  final AssessmentApi assessmentApi = AssessmentApi();
 
-  File? selectedImage;
+  /// True only once [_setAndValidatePhoto] has confirmed
+  /// [AssessmentApi.detectPerson] accepted this exact image as a
+  /// full-body photo -- but [registerParticipant] still re-checks
+  /// server-side right before the actual upload/Firestore write, rather
+  /// than trusting this flag alone. Never set directly from
+  /// [takePhoto]/[pickGallery]; see [_setAndValidatePhoto].
+  CapturedImage? selectedImage;
+
   bool isLoading = false;
+
+  /// True while a just-picked photo is being checked by
+  /// [AssessmentApi.detectPerson] -- covers the brief window between "a
+  /// photo was picked" and "the full-body check finished".
+  bool validatingPhoto = false;
 
   @override
   void initState() {
@@ -90,20 +115,51 @@ class _RegisterScreenState extends State<RegisterScreen> {
     staffIdController.dispose();
     trainerNameController.dispose();
     registrationDateController.dispose();
-    photoValidationService.dispose();
     super.dispose();
   }
 
   Future<void> takePhoto() async {
+    final status = await Permission.camera.request();
+
+    if (status.isPermanentlyDenied) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            "Camera permission is required to take a photo. "
+            "Please enable it in Settings.",
+          ),
+          backgroundColor: Colors.red,
+          action: SnackBarAction(
+            label: "Open Settings",
+            textColor: Colors.white,
+            onPressed: openAppSettings,
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (!status.isGranted) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Camera permission is required to take a photo."),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+
     final result = await imageService.pickFromCamera();
 
     if (!mounted) return;
 
     switch (result.status) {
       case CameraPickStatus.success:
-        setState(() {
-          selectedImage = result.file;
-        });
+        await _setAndValidatePhoto(result.image!);
         break;
 
       case CameraPickStatus.cancelled:
@@ -152,7 +208,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (source == null || !mounted) return;
 
-    final File? image;
+    final CapturedImage? image;
 
     switch (source) {
       case _PhotoSource.gallery:
@@ -163,10 +219,55 @@ class _RegisterScreenState extends State<RegisterScreen> {
         break;
     }
 
-    if (image != null && mounted) {
-      setState(() {
+    if (image == null || !mounted) return;
+
+    await _setAndValidatePhoto(image);
+  }
+
+  /// The one place [selectedImage] is ever set from -- whether [image]
+  /// came from the camera or Gallery/Files, both funnel through here so
+  /// there is exactly one full-body validation path to keep correct,
+  /// not two that could drift apart. Reuses
+  /// [AssessmentApi.detectPerson] -- the app's existing, already-strict
+  /// server-side full-body check (see the class doc comment); never a
+  /// new/duplicate detector. Fails closed: any exception, timeout, or
+  /// non-success response is treated as rejection, never as an
+  /// accepted photo.
+  ///
+  /// [selectedImage] is only ever updated on a real accept; a rejected
+  /// photo leaves whatever was there before untouched (null on a first
+  /// attempt), so UploadPhotoCard naturally falls back to its "Upload
+  /// Reference Photo" empty state -- retrying is just tapping Take Photo
+  /// or Gallery/Files again.
+  Future<void> _setAndValidatePhoto(CapturedImage image) async {
+    setState(() {
+      validatingPhoto = true;
+    });
+
+    bool isFullBody;
+    try {
+      isFullBody = await assessmentApi.detectPerson(image: image);
+    } catch (e) {
+      debugPrint("RegisterScreen._setAndValidatePhoto: $e");
+      isFullBody = false;
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      validatingPhoto = false;
+      if (isFullBody) {
         selectedImage = image;
-      });
+      }
+    });
+
+    if (!isFullBody) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(kFullBodyPhotoErrorMessage),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -208,24 +309,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final messenger = ScaffoldMessenger.of(context);
 
-    // Reject the reference photo before it's ever uploaded or written
-    // to Firestore if ML Kit can't find a face in it.
-    final hasFace = await photoValidationService.hasDetectableFace(
-      selectedImage!,
-    );
+    // Defense-in-depth: [selectedImage] should already be a confirmed
+    // full-body photo (see _setAndValidatePhoto's doc comment), but the
+    // actual registration entry point re-checks it independently here
+    // rather than trusting that invariant alone -- nothing downstream of
+    // this point (Google Drive upload, Firestore participant write) may
+    // ever run against an unvalidated photo. Fails closed, same as
+    // _setAndValidatePhoto.
+    bool isFullBody;
+    try {
+      isFullBody = await assessmentApi.detectPerson(image: selectedImage!);
+    } catch (e) {
+      debugPrint("RegisterScreen: re-validation before register failed - $e");
+      isFullBody = false;
+    }
 
     if (!mounted) return;
 
-    if (!hasFace) {
+    if (!isFullBody) {
       setState(() {
         isLoading = false;
+        selectedImage = null;
       });
 
       messenger.showSnackBar(
         const SnackBar(
-          content: Text(
-            "No face detected in the reference photo. Please retake it.",
-          ),
+          content: Text(kFullBodyPhotoErrorMessage),
           backgroundColor: Colors.red,
         ),
       );
@@ -313,6 +422,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               UploadPhotoCard(
                 image: selectedImage,
+                isValidating: validatingPhoto,
                 onTakePhoto: takePhoto,
                 onPickGallery: pickGallery,
                 onRemovePhoto: removePhoto,

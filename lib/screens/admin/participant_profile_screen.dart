@@ -380,7 +380,7 @@ class _ParticipantProfileScreenState extends State<ParticipantProfileScreen> {
                               Expanded(
                                 child: _StatBox(
                                   label: "Latest Score",
-                                  value: "${participant.latestScore}%",
+                                  value: "${participant.latestScore}/60",
                                 ),
                               ),
                               const SizedBox(width: 12),

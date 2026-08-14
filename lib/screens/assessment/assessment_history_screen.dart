@@ -238,7 +238,7 @@ class AssessmentHistoryScreen extends StatelessWidget {
                                   ),
 
                                   child: Text(
-                                    "$score%",
+                                    "$score/60",
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: _resultColor(result),
@@ -320,7 +320,7 @@ class AssessmentHistoryScreen extends StatelessWidget {
 
                                                   Text("Date : $date"),
 
-                                                  Text("Score : $score%"),
+                                                  Text("Score : $score/60"),
 
                                                   Text("Result : $result"),
 

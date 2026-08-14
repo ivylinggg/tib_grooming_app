@@ -1,14 +1,14 @@
-import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 
+import '../../api/assessment_api.dart';
 import '../../models/app_user.dart';
+import '../../models/captured_image.dart';
 import '../../models/participant.dart';
 import '../../services/auth_service.dart';
 import '../../services/firebase_service.dart';
+import '../../services/image_service.dart';
 import '../ai/ai_assessment_screen.dart';
 import '../auth/login_screen.dart';
 import '../auth/role_selection_screen.dart';
@@ -285,10 +285,6 @@ class _ParticipantManagementScreenState
                 // SizedBox gap instead of Spacer -- Spacer needs a
                 // bounded height to expand into, which content-sized
                 // Column no longer has) means it can't overflow itself.
-                // Not wrapping this Row itself in
-                // crossAxisAlignment.stretch either -- see
-                // DashboardScreen/StatisticsScreen's own doc comments
-                // for why that combination crashes inside a scrollable.
                 Widget card(
                   String title,
                   String value,
@@ -581,7 +577,8 @@ class _ParticipantManagementScreenState
                                                         participant.trainerName,
                                                   );
 
-                                              File? selectedImage;
+                                              CapturedImage? selectedImage;
+                                              bool validatingPhoto = false;
 
                                               showDialog(
                                                 context: context,
@@ -600,58 +597,117 @@ class _ParticipantManagementScreenState
                                                                     .min,
                                                             children: [
                                                               GestureDetector(
-                                                                onTap: () async {
-                                                                  final picker =
-                                                                      ImagePicker();
+                                                                // STRICT COMPANY REQUIREMENT: the
+                                                                // Reference Photo must be a
+                                                                // full-body photo (head to feet),
+                                                                // same as every other appearance
+                                                                // photo entry point in this app --
+                                                                // see RegisterScreen's class doc
+                                                                // comment. Editing it from here
+                                                                // must go through the exact same
+                                                                // authoritative validator
+                                                                // (AssessmentApi.detectPerson),
+                                                                // never a separate, unvalidated
+                                                                // path -- this dialog previously
+                                                                // bypassed validation entirely.
+                                                                onTap:
+                                                                    validatingPhoto
+                                                                    ? null
+                                                                    : () async {
+                                                                        final picked =
+                                                                            await ImageService().pickFromGallery();
 
-                                                                  final image = await picker.pickImage(
-                                                                    source: ImageSource
-                                                                        .gallery,
-                                                                    imageQuality:
-                                                                        80,
-                                                                  );
+                                                                        if (picked ==
+                                                                            null) {
+                                                                          return;
+                                                                        }
 
-                                                                  if (image ==
-                                                                      null) {
-                                                                    return;
-                                                                  }
+                                                                        setDialogState(() {
+                                                                          validatingPhoto =
+                                                                              true;
+                                                                        });
 
-                                                                  setDialogState(() {
-                                                                    selectedImage =
-                                                                        File(
-                                                                          image
-                                                                              .path,
-                                                                        );
-                                                                  });
-                                                                },
+                                                                        bool
+                                                                        isFullBody;
+                                                                        try {
+                                                                          isFullBody = await AssessmentApi().detectPerson(
+                                                                            image:
+                                                                                picked,
+                                                                          );
+                                                                        } catch (
+                                                                          e
+                                                                        ) {
+                                                                          debugPrint(
+                                                                            "EditParticipant photo validation: $e",
+                                                                          );
+                                                                          isFullBody =
+                                                                              false;
+                                                                        }
 
-                                                                child: CircleAvatar(
-                                                                  radius: 45,
-                                                                  backgroundImage:
-                                                                      selectedImage !=
-                                                                          null
-                                                                      ? FileImage(
-                                                                          selectedImage!,
-                                                                        )
-                                                                      : participant
-                                                                            .photoUrl
-                                                                            .isNotEmpty
-                                                                      ? NetworkImage(
-                                                                          participant
-                                                                              .photoUrl,
-                                                                        )
-                                                                      : null,
-                                                                  child:
-                                                                      selectedImage ==
-                                                                              null &&
-                                                                          participant
-                                                                              .photoUrl
-                                                                              .isEmpty
-                                                                      ? const Icon(
-                                                                          Icons
-                                                                              .camera_alt,
-                                                                        )
-                                                                      : null,
+                                                                        setDialogState(() {
+                                                                          validatingPhoto =
+                                                                              false;
+                                                                          if (isFullBody) {
+                                                                            selectedImage =
+                                                                                picked;
+                                                                          }
+                                                                        });
+
+                                                                        if (!isFullBody) {
+                                                                          if (!context
+                                                                              .mounted) {
+                                                                            return;
+                                                                          }
+                                                                          ScaffoldMessenger.of(
+                                                                            context,
+                                                                          ).showSnackBar(
+                                                                            const SnackBar(
+                                                                              content: Text(
+                                                                                kFullBodyPhotoErrorMessage,
+                                                                              ),
+                                                                              backgroundColor: Colors.red,
+                                                                            ),
+                                                                          );
+                                                                        }
+                                                                      },
+
+                                                                child: Stack(
+                                                                  alignment:
+                                                                      Alignment
+                                                                          .center,
+                                                                  children: [
+                                                                    CircleAvatar(
+                                                                      radius:
+                                                                          45,
+                                                                      backgroundImage:
+                                                                          selectedImage !=
+                                                                              null
+                                                                          ? (selectedImage!.file !=
+                                                                                        null
+                                                                                    ? FileImage(
+                                                                                        selectedImage!.file!,
+                                                                                      )
+                                                                                    : MemoryImage(
+                                                                                        selectedImage!.webBytes!,
+                                                                                      ))
+                                                                                as ImageProvider
+                                                                          : participant.photoUrl.isNotEmpty
+                                                                          ? NetworkImage(
+                                                                              participant.photoUrl,
+                                                                            )
+                                                                          : null,
+                                                                      child:
+                                                                          selectedImage ==
+                                                                                  null &&
+                                                                              participant.photoUrl.isEmpty
+                                                                          ? const Icon(
+                                                                              Icons.camera_alt,
+                                                                            )
+                                                                          : null,
+                                                                    ),
+                                                                    if (validatingPhoto)
+                                                                      const CircularProgressIndicator(),
+                                                                  ],
                                                                 ),
                                                               ),
 
@@ -768,7 +824,7 @@ class _ParticipantManagementScreenState
                                                                 photoUrl:
                                                                     photoUrl,
                                                               );
-                                                              // AFTER
+
                                                               if (!mounted) {
                                                                 return;
                                                               }

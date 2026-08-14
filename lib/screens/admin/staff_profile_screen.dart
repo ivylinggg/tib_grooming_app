@@ -473,7 +473,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                 ),
                 subtitle: Text(
                   "Staff ID: $staffId  •  Registered: $registrationDate\n"
-                  "Latest: $latestResult ($latestScore%)",
+                  "Latest: $latestResult ($latestScore/60)",
                 ),
                 isThreeLine: true,
                 trailing: Text(

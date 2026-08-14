@@ -6,11 +6,13 @@ import '../../models/app_user.dart';
 import '../../models/overall_result.dart';
 import '../../services/auth_service.dart';
 import '../../services/firebase_service.dart';
+import '../../services/notification_service.dart';
 import '../auth/login_screen.dart';
 import '../auth/role_selection_screen.dart';
 import '../register/register_screen.dart';
 import 'assessment_detail_screen.dart';
 import 'assessment_management_screen.dart';
+import 'notifications_screen.dart';
 import 'participant_management_screen.dart';
 import 'participant_profile_screen.dart';
 import 'staff_management_screen.dart';
@@ -44,6 +46,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final AuthService _authService = AuthService();
   final FirebaseService _firebaseService = FirebaseService();
+  final NotificationService _notificationService = NotificationService();
 
   bool _checkingAccess = true;
 
@@ -52,6 +55,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int totalAssessments = 0;
   int completedAssessments = 0;
   int pendingAssessments = 0;
+  int failedAssessments = 0;
 
   double averageScore = 0;
 
@@ -174,16 +178,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       if (assessmentSnapshot.docs.isNotEmpty) {
         int totalScore = 0;
+        int failed = 0;
 
         for (final doc in assessmentSnapshot.docs) {
           final data = doc.data();
           // Matches the field name saveAssessment() actually writes.
-          totalScore += (data["totalScore"] ?? 0) as int;
+          final score = (data["totalScore"] ?? 0) as int;
+          totalScore += score;
+
+          // Same strictly-less-than rule FirebaseService._maybeNotify
+          // AdminOfFailure uses to decide whether to email Admin -- a
+          // score of exactly kFailingScoreThreshold is not a failure.
+          if (score < kFailingScoreThreshold) failed++;
         }
 
         averageScore = totalScore / assessmentSnapshot.docs.length;
+        failedAssessments = failed;
       } else {
         averageScore = 0;
+        failedAssessments = 0;
       }
     } catch (e) {
       debugPrint("DashboardScreen: loadDashboard failed - $e");
@@ -325,6 +338,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
+          _NotificationBellAction(notificationService: _notificationService),
           IconButton(
             onPressed: _confirmLogout,
             icon: const Icon(Icons.logout),
@@ -498,7 +512,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Expanded(
                       child: _OverviewCard(
                         title: "Average Score",
-                        value: "${averageScore.toStringAsFixed(1)}%",
+                        value: "${averageScore.toStringAsFixed(1)}/60",
                         icon: Icons.analytics,
                       ),
                     ),
@@ -525,6 +539,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                   ],
+                ),
+
+                const SizedBox(height: 15),
+
+                // A failed assessment (totalScore < kFailingScoreThreshold)
+                // already triggers an automatic email to every Admin
+                // account (see FirebaseService._maybeNotifyAdminOfFailure)
+                // -- this card is the equivalent at-a-glance summary on
+                // the dashboard itself, not a separate feature. Full
+                // width, not paired into a two-column Row like the cards
+                // above: there's only one new metric here, and it's the
+                // one meant to draw the eye rather than blend in.
+                _OverviewCard(
+                  title: "Failed Grooming Assessments",
+                  value: "$failedAssessments",
+                  icon: Icons.warning_amber_rounded,
+                  iconColor: Colors.red,
                 ),
               ],
 
@@ -740,6 +771,51 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
+/// AppBar bell icon with a live unread-count badge -- opens
+/// NotificationsScreen. Reads [FirebaseAuth.instance.currentUser]
+/// itself (rather than taking it as a parameter) since it needs the
+/// real signed-in uid to know whose [AdminNotification.readBy] entry
+/// counts as "unread"; renders as a plain, badge-less bell if somehow
+/// nobody is signed in (DashboardScreen's own _checkAdminAccess already
+/// guarantees that can't happen on this screen, but this widget doesn't
+/// assume its caller enforced that).
+class _NotificationBellAction extends StatelessWidget {
+  final NotificationService notificationService;
+
+  const _NotificationBellAction({required this.notificationService});
+
+  @override
+  Widget build(BuildContext context) {
+    final adminUid = FirebaseAuth.instance.currentUser?.uid;
+
+    Widget bell({int unreadCount = 0}) {
+      return IconButton(
+        tooltip: "Notifications",
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+          );
+        },
+        icon: Badge(
+          isLabelVisible: unreadCount > 0,
+          label: Text("$unreadCount"),
+          child: const Icon(Icons.notifications_outlined),
+        ),
+      );
+    }
+
+    if (adminUid == null) return bell();
+
+    return StreamBuilder<int>(
+      stream: notificationService.streamUnreadCount(adminUid),
+      builder: (context, snapshot) {
+        return bell(unreadCount: snapshot.data ?? 0);
+      },
+    );
+  }
+}
+
 /// Never gives itself a fixed height -- the previous version's fixed
 /// `height: 135` was the exact cause of the "BOTTOM OVERFLOWED" errors:
 /// any title long enough to wrap to two lines, or any device text-scale
@@ -751,10 +827,17 @@ class _OverviewCard extends StatelessWidget {
   final String value;
   final IconData icon;
 
+  /// Defaults to the existing brand blue every card already used --
+  /// only the new "Failed Grooming Assessments" card passes red, to
+  /// stand out as the one metric here that needs attention rather than
+  /// just informs.
+  final Color iconColor;
+
   const _OverviewCard({
     required this.title,
     required this.value,
     required this.icon,
+    this.iconColor = const Color(0xFF1F3D73),
   });
 
   @override
@@ -770,7 +853,7 @@ class _OverviewCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: const Color(0xFF1F3D73), size: 28),
+          Icon(icon, color: iconColor, size: 28),
 
           const SizedBox(height: 12),
 

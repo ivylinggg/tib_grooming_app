@@ -351,7 +351,7 @@ class _AssessmentManagementScreenState
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              "$score%",
+                              "$score/60",
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: _resultColor(overall),

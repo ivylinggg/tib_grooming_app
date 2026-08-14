@@ -89,7 +89,7 @@ class ResultScreen extends StatelessWidget {
                     const SizedBox(height: 12),
 
                     Text(
-                      "Total Score : ${result.totalScore}",
+                      "Total Score : ${result.totalScore}/60",
                       style: const TextStyle(fontSize: 18),
                     ),
                   ],

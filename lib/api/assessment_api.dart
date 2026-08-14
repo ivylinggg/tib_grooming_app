@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../config/apps_script_config.dart';
 import '../models/assessment_result.dart';
+import '../models/captured_image.dart';
 
 /// Minimal internal capture of an HTTP response -- status, body, the
 /// `Location` header for following a redirect, and any `Set-Cookie` for
@@ -27,6 +27,15 @@ class _RawHttpResult {
     this.setCookie,
   });
 }
+
+/// User-facing copy for a photo [AssessmentApi.detectPerson] rejected --
+/// shared by every capture/upload entry point (CheckInCard,
+/// AIAssessmentScreen) that calls it, so a rejection always says exactly
+/// the same thing regardless of which screen or which of Camera/Gallery
+/// produced the photo.
+const String kFullBodyPhotoErrorMessage =
+    "Please take a full-body photo. Make sure your entire body, "
+    "including your feet, is visible.";
 
 /// Calls the Apps Script backend (apps_script/Code.gs + Claude.gs) for
 /// full-body detection and AI grooming analysis. Claude itself is only
@@ -50,10 +59,15 @@ class AssessmentApi {
   /// ceiling for a Web App request.
   static const _detectPersonTimeout = Duration(seconds: 20);
   static const _analyzeTimeout = Duration(seconds: 45);
+  static const _notifyTimeout = Duration(seconds: 20);
 
-  /// File → Base64
-  String _imageToBase64(File image) {
-    final bytes = image.readAsBytesSync();
+  /// CapturedImage → Base64. Reads through [CapturedImage.readAsBytes],
+  /// which works identically on native (reads the wrapped `File`) and
+  /// web (returns bytes already captured at pick/capture time) -- see
+  /// that class's doc comment for why a plain `dart:io File` can't do
+  /// this on web.
+  Future<String> _imageToBase64(CapturedImage image) async {
+    final bytes = await image.readAsBytes();
     return base64Encode(bytes);
   }
 
@@ -92,7 +106,7 @@ class AssessmentApi {
     Map<String, dynamic> body, {
     required Duration timeout,
   }) async {
-    final client = HttpClient();
+    final client = http.Client();
 
     try {
       final requestBody = jsonEncode(body);
@@ -169,39 +183,59 @@ class AssessmentApi {
   /// Sends [cookie] as the `Cookie` header when following a later hop of
   /// a redirect chain, and always reports any `Set-Cookie` the response
   /// sent back so the caller can carry it to the next hop.
+  ///
+  /// Uses `package:http` (cross-platform) instead of a raw `dart:io
+  /// HttpClient` -- `dart:io`'s `HttpClient` is backed by real TCP
+  /// sockets, which browsers never expose to Dart, so constructing one
+  /// throws `UnsupportedError` immediately on Flutter Web.
+  ///
+  /// `followRedirects = false` is only ever set on native platforms. On
+  /// every native platform, `package:http`'s default client is itself
+  /// backed by `dart:io.HttpClient`, and `http.Request.followRedirects`/
+  /// `maxRedirects` map directly onto that client's own redirect
+  /// handling -- so this hop-by-hop loop still behaves identically to
+  /// before there. On web, `package:http`'s browser client is backed by
+  /// the browser's own fetch/XHR layer, which always follows a redirect
+  /// before Dart code ever sees the response -- it has no supported way
+  /// to disable that from here, and never exposes an intermediate
+  /// Location/Set-Cookie header to script either, by browser design --
+  /// so `followRedirects` is left at its default there, `current.
+  /// statusCode` comes back already the final response, this loop's
+  /// `_isRedirect` check simply never fires, and the request still
+  /// reaches the same Apps Script JSON response.
   Future<_RawHttpResult> _send(
-    HttpClient client, {
+    http.Client client, {
     required String method,
     required Uri url,
     String? body,
     String? cookie,
   }) async {
-    final request = await client.openUrl(method, url);
-    request.followRedirects = false;
+    final request = http.Request(method, url);
 
-    request.headers.set(HttpHeaders.userAgentHeader, "tib-grooming-app/1.0");
+    if (!kIsWeb) {
+      request.followRedirects = false;
+      request.maxRedirects = 0;
+    }
+
+    request.headers["User-Agent"] = "tib-grooming-app/1.0";
 
     if (cookie != null && cookie.isNotEmpty) {
-      request.headers.set(HttpHeaders.cookieHeader, cookie);
+      request.headers["Cookie"] = cookie;
     }
 
     if (body != null) {
-      request.headers.set(HttpHeaders.contentTypeHeader, "application/json");
-      request.write(body);
+      request.headers["Content-Type"] = "application/json";
+      request.body = body;
     }
 
-    final response = await request.close();
-    final responseBody = await response.transform(utf8.decoder).join();
-
-    final setCookie = response.cookies.isEmpty
-        ? null
-        : response.cookies.map((c) => "${c.name}=${c.value}").join("; ");
+    final streamedResponse = await client.send(request);
+    final response = await http.Response.fromStream(streamedResponse);
 
     return _RawHttpResult(
       statusCode: response.statusCode,
-      body: responseBody,
-      location: response.headers.value(HttpHeaders.locationHeader),
-      setCookie: setCookie,
+      body: response.body,
+      location: response.headers["location"],
+      setCookie: response.headers["set-cookie"],
     );
   }
 
@@ -213,9 +247,9 @@ class AssessmentApi {
         statusCode == 308;
   }
 
-  Future<bool> detectPerson({required File image}) async {
+  Future<bool> detectPerson({required CapturedImage image}) async {
     try {
-      final imageBase64 = _imageToBase64(image);
+      final imageBase64 = await _imageToBase64(image);
 
       final json = await _post({
         "action": "detectPerson",
@@ -236,10 +270,10 @@ class AssessmentApi {
 
   Future<AssessmentResult?> analyze({
     required String referencePhotoUrl,
-    required File todayPhoto,
+    required CapturedImage todayPhoto,
   }) async {
     try {
-      final todayImageBase64 = _imageToBase64(todayPhoto);
+      final todayImageBase64 = await _imageToBase64(todayPhoto);
 
       final referenceImageBase64 = await _urlToBase64(referencePhotoUrl);
 
@@ -261,6 +295,72 @@ class AssessmentApi {
     } catch (e) {
       debugPrint("Assessment Error: $e");
       return null;
+    }
+  }
+
+  /// Tells the Apps Script backend to send the "[URGENT] Grooming
+  /// Assessment Failed" email -- routed through the same deployment as
+  /// [analyze]/[detectPerson] (Code.gs's doPost, action: "notifyFailure"
+  /// -> apps_script/Notify.gs), reusing this class's existing [_post]
+  /// redirect-following/timeout machinery rather than standing up a
+  /// second HTTP client for one more action. No email credentials live
+  /// here or anywhere in Flutter -- MailApp runs inside Apps Script, as
+  /// whichever account deployed it.
+  ///
+  /// Deliberately does NOT take or send any recipient address. Apps
+  /// Script resolves who the Admin recipients are entirely on its own
+  /// (from its own Script Properties -- see Notify.gs's doc comment),
+  /// so this request only ever carries the assessment's own data. This
+  /// is what makes it safe to call from the fully anonymous, no-auth
+  /// Staff Check-In flow as well as the signed-in Admin Assessment flow
+  /// -- there is no `users` query and no admin address anywhere in
+  /// Flutter for either caller to see.
+  ///
+  /// Returns false (never throws) on any failure -- Apps Script
+  /// unreachable, a non-2xx/redirect-loop response, or Apps Script
+  /// itself reporting `success: false` (including "no admin recipient
+  /// configured"). The caller (FirebaseService._maybeNotifyAdminOfFailure)
+  /// treats this exactly like every other failure mode: logged, and the
+  /// already-saved assessment is never affected either way.
+  Future<bool> notifyAdminOfFailedAssessment({
+    required String assessmentId,
+    required String participantId,
+    required String participantName,
+    String? trainerName,
+    required int totalScore,
+    required String overall,
+    required String summary,
+    required String suggestion,
+    required List<Map<String, dynamic>> criteria,
+    String? assessmentDateText,
+  }) async {
+    try {
+      final json = await _post({
+        "action": "notifyFailure",
+        "assessmentId": assessmentId,
+        "participantId": participantId,
+        "participantName": participantName,
+        "trainerName": trainerName ?? "",
+        "totalScore": totalScore,
+        "overall": overall,
+        "summary": summary,
+        "suggestion": suggestion,
+        "criteria": criteria,
+        "assessmentDate": assessmentDateText ?? "",
+      }, timeout: _notifyTimeout);
+
+      if (json["success"] != true) {
+        debugPrint(
+          "notifyAdminOfFailedAssessment: Apps Script reported failure - "
+          "${json["error"]}",
+        );
+        return false;
+      }
+
+      return true;
+    } catch (e) {
+      debugPrint("notifyAdminOfFailedAssessment: $e");
+      return false;
     }
   }
 }

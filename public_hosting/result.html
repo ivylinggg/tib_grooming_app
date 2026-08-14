@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TIB Grooming Assessment Result</title>
+<meta name="robots" content="noindex, nofollow" />
+<style>
+  :root {
+    --brand: #1F3D73;
+    --bg: #F5F7FB;
+    --card-bg: #FFFFFF;
+    --text: #1A1A1A;
+    --muted: #6B7280;
+    --border: #E5E7EB;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  header {
+    background: var(--brand);
+    color: #fff;
+    padding: 28px 20px;
+  }
+
+  header .brand {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 3px;
+  }
+
+  header .subtitle {
+    margin-top: 6px;
+    font-size: 14px;
+    opacity: 0.85;
+  }
+
+  main {
+    max-width: 640px;
+    margin: -20px auto 40px;
+    padding: 0 16px;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border-radius: 14px;
+    padding: 20px;
+    margin-top: 16px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  }
+
+  .card h2 {
+    margin: 0 0 12px;
+    font-size: 15px;
+    color: var(--brand);
+  }
+
+  .kv-row {
+    display: flex;
+    padding: 4px 0;
+    font-size: 14px;
+    gap: 12px;
+  }
+
+  .kv-row .k {
+    width: 140px;
+    flex-shrink: 0;
+    color: var(--muted);
+  }
+
+  .kv-row .v {
+    font-weight: 600;
+  }
+
+  .result-card {
+    text-align: center;
+  }
+
+  .result-card .overall {
+    font-size: 28px;
+    font-weight: 800;
+  }
+
+  .result-card .score {
+    margin-top: 6px;
+    font-size: 15px;
+    color: var(--text);
+  }
+
+  table.criteria {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  table.criteria th {
+    background: var(--brand);
+    color: #fff;
+    text-align: left;
+    padding: 8px 10px;
+    font-weight: 600;
+  }
+
+  table.criteria td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  table.criteria tr:last-child td {
+    border-bottom: none;
+  }
+
+  .text-block {
+    background: #F3F4F6;
+    border-radius: 8px;
+    padding: 14px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .photos {
+    display: flex;
+    gap: 12px;
+  }
+
+  .photos figure {
+    flex: 1;
+    margin: 0;
+  }
+
+  .photos figcaption {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .photos img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 8px;
+    display: block;
+  }
+
+  .state-screen {
+    max-width: 480px;
+    margin: 60px auto;
+    text-align: center;
+    padding: 0 24px;
+  }
+
+  .state-screen .icon {
+    font-size: 40px;
+  }
+
+  .state-screen h1 {
+    font-size: 18px;
+    margin: 12px 0 6px;
+  }
+
+  .state-screen p {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 24px 0 40px;
+  }
+
+  #app { display: none; }
+</style>
+</head>
+<body>
+
+  <div id="loading" class="state-screen">
+    <div class="icon">⏳</div>
+    <h1>Loading result&hellip;</h1>
+  </div>
+
+  <div id="error" class="state-screen" style="display:none;">
+    <div class="icon">🔒</div>
+    <h1>This result is not available</h1>
+    <p>
+      This link may have been disabled by the Staff member who shared it,
+      or it may no longer exist. If you believe this is a mistake, ask
+      them to share the result again.
+    </p>
+  </div>
+
+  <div id="config-error" class="state-screen" style="display:none;">
+    <div class="icon">⚠️</div>
+    <h1>This page is not configured yet</h1>
+    <p>
+      The site administrator needs to register a Firebase Web app for
+      this project and put its API key/App ID into this page before it
+      can load any result. See the deployment notes for the exact
+      steps.
+    </p>
+  </div>
+
+  <div id="app">
+    <header>
+      <div class="brand">TIB GROOMING</div>
+      <div class="subtitle">Grooming Assessment Result</div>
+    </header>
+
+    <main>
+      <div class="card">
+        <h2>Participant</h2>
+        <div class="kv-row"><div class="k">Staff ID</div><div class="v" id="f-staffId"></div></div>
+        <div class="kv-row"><div class="k">Name</div><div class="v" id="f-name"></div></div>
+        <div class="kv-row"><div class="k">Trainer</div><div class="v" id="f-trainer"></div></div>
+        <div class="kv-row"><div class="k">Assessment Date</div><div class="v" id="f-date"></div></div>
+      </div>
+
+      <div class="card result-card">
+        <div class="overall" id="f-overall"></div>
+        <div class="score" id="f-score"></div>
+      </div>
+
+      <div class="card" id="card-criteria" style="display:none;">
+        <h2>Grooming Criteria</h2>
+        <table class="criteria">
+          <thead>
+            <tr><th>Criterion</th><th>Score</th><th>Note</th></tr>
+          </thead>
+          <tbody id="f-criteria"></tbody>
+        </table>
+      </div>
+
+      <div class="card" id="card-summary" style="display:none;">
+        <h2>AI Summary</h2>
+        <div class="text-block" id="f-summary"></div>
+      </div>
+
+      <div class="card" id="card-suggestion" style="display:none;">
+        <h2>AI Recommendation</h2>
+        <div class="text-block" id="f-suggestion"></div>
+      </div>
+
+      <div class="card" id="card-photos" style="display:none;">
+        <h2>Photos</h2>
+        <div class="photos" id="f-photos"></div>
+      </div>
+    </main>
+
+    <footer>TIB Grooming Assessment System</footer>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import {
+    getFirestore,
+    doc,
+    getDoc,
+  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+  // ---------------------------------------------------------------
+  // Firebase Web app config -- the real registered Web app for the
+  // `tib-grooming` project (Firebase Console -> Project Settings ->
+  // Your apps -> Web). No longer a placeholder; this is what lets this
+  // page call getFirestore()/getDoc() as an anonymous, unauthenticated
+  // visitor against the real project.
+  // ---------------------------------------------------------------
+  const firebaseConfig = {
+    apiKey: "AIzaSyAD•••••••••••••••••••••••••••••••",
+    authDomain: "tib-grooming.firebaseapp.com",
+    projectId: "tib-grooming",
+    storageBucket: "tib-grooming.firebasestorage.app",
+    messagingSenderId: "327434489432",
+    appId: "1:327434489432:web:cf8337d3e064fdaa03842d",
+    measurementId: "G-KFMZ22DNV3",
+  };
+
+  const $ = (id) => document.getElementById(id);
+
+  function showError() {
+    $("loading").style.display = "none";
+    $("app").style.display = "none";
+    $("config-error").style.display = "none";
+    $("error").style.display = "block";
+  }
+
+  function showConfigError() {
+    $("loading").style.display = "none";
+    $("app").style.display = "none";
+    $("error").style.display = "none";
+    $("config-error").style.display = "block";
+  }
+
+  // Distinguishes "the site admin never finished setup" from "this
+  // share was disabled/doesn't exist" -- the two look identical to a
+  // recipient otherwise, but only one of them is fixable by anyone
+  // other than the site admin. Checked before initializeApp() is ever
+  // called: an invalid apiKey doesn't fail cleanly, it fails deep
+  // inside the SDK's own network calls, which is a confusing place for
+  // this specific, easily-diagnosed misconfiguration to surface.
+  if (
+    firebaseConfig.apiKey.startsWith("REPLACE_WITH_") ||
+    firebaseConfig.appId.startsWith("REPLACE_WITH_")
+  ) {
+    showConfigError();
+  } else {
+    initializeAndLoad();
+  }
+
+  function initializeAndLoad() {
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    load(db);
+  }
+
+  function showApp() {
+    $("loading").style.display = "none";
+    $("error").style.display = "none";
+    $("app").style.display = "block";
+  }
+
+  // Same vocabulary/classification as OverallResult.classify in the
+  // Flutter app (lib/models/overall_result.dart) -- kept in sync by
+  // hand since this page can't import Dart code; case-insensitive,
+  // falls back to "insufficient" (red) for anything unrecognized.
+  function classify(raw) {
+    switch ((raw || "").trim().toLowerCase()) {
+      case "excellent": return { color: "#16A34A" };
+      case "good": return { color: "#2563EB" };
+      case "needs work": return { color: "#F97316" };
+      default: return { color: "#DC2626" };
+    }
+  }
+
+  function formatDate(value) {
+    if (!value || typeof value.toDate !== "function") return "-";
+    const date = value.toDate();
+    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+  }
+
+  function escapeHtml(value) {
+    const div = document.createElement("div");
+    div.textContent = value == null ? "" : String(value);
+    return div.innerHTML;
+  }
+
+  function render(data) {
+    $("f-staffId").textContent = data.participantId || "-";
+    $("f-name").textContent = data.participantName || "-";
+    $("f-trainer").textContent = data.trainerName || "Not available";
+    $("f-date").textContent = formatDate(data.assessmentDate);
+
+    const overall = data.overall || "-";
+    const { color } = classify(overall);
+    const overallEl = $("f-overall");
+    overallEl.textContent = overall;
+    overallEl.style.color = color;
+
+    $("f-score").textContent = `Overall Score: ${data.totalScore ?? 0}/60`;
+
+    const criteria = Array.isArray(data.criteria) ? data.criteria : [];
+    if (criteria.length > 0) {
+      $("f-criteria").innerHTML = criteria
+        .map(
+          (c) => `<tr>
+            <td>${escapeHtml(c.label)}</td>
+            <td>${escapeHtml(c.score)}</td>
+            <td>${escapeHtml(c.tip)}</td>
+          </tr>`,
+        )
+        .join("");
+      $("card-criteria").style.display = "block";
+    }
+
+    if (data.summary) {
+      $("f-summary").textContent = data.summary;
+      $("card-summary").style.display = "block";
+    }
+
+    if (data.suggestion) {
+      $("f-suggestion").textContent = data.suggestion;
+      $("card-suggestion").style.display = "block";
+    }
+
+    const photos = [];
+    if (data.referencePhotoUrl) {
+      photos.push(["Reference Photo", data.referencePhotoUrl]);
+    }
+    if (data.todayPhotoUrl) {
+      photos.push(["Check-In Photo", data.todayPhotoUrl]);
+    }
+
+    if (photos.length > 0) {
+      $("f-photos").innerHTML = photos
+        .map(
+          ([caption, url]) => `<figure>
+            <figcaption>${escapeHtml(caption)}</figcaption>
+            <img src="${escapeHtml(url)}" alt="${escapeHtml(caption)}" loading="lazy" />
+          </figure>`,
+        )
+        .join("");
+      $("card-photos").style.display = "block";
+    }
+
+    showApp();
+  }
+
+  async function load(db) {
+    // firebase.json rewrites /result/** to this page, so the token is
+    // whatever comes after "/result/" in the real URL the visitor
+    // opened -- trailing slashes stripped defensively.
+    const path = window.location.pathname.replace(/\/+$/, "");
+    const token = path.split("/").pop();
+
+    if (!token) {
+      showError();
+      return;
+    }
+
+    try {
+      const snap = await getDoc(doc(db, "shared_results", token));
+
+      if (!snap.exists() || snap.data().sharingEnabled !== true) {
+        showError();
+        return;
+      }
+
+      render(snap.data());
+    } catch (err) {
+      console.error("Failed to load shared result:", err);
+      showError();
+    }
+  }
+</script>
+
+</body>
+</html>

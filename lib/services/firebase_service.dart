@@ -1,12 +1,35 @@
-import 'dart:io';
+import 'dart:async';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
+import '../api/assessment_api.dart';
 import '../api/google_drive_api.dart';
+import '../models/captured_image.dart';
 import '../models/register_result.dart';
+import 'notification_service.dart';
+
+/// A grooming score below this is a failed assessment -- strictly
+/// `< kFailingScoreThreshold`, so a score of exactly this value is a
+/// pass. Kept as one named constant rather than a magic `40` repeated
+/// wherever this business rule matters, since
+/// [FirebaseService._maybeNotifyAdminOfFailure] is the only place that
+/// currently needs it.
+const int kFailingScoreThreshold = 40;
+
+/// How long a `failureNotificationClaimedAt` claim (see
+/// [FirebaseService._maybeNotifyAdminOfFailure]) is honored as "someone
+/// else is actively sending this one right now" before it's instead
+/// treated as abandoned and safe to reclaim. Generously larger than the
+/// worst realistic time that attempt could still be genuinely in
+/// flight (AssessmentApi's own notify timeout is 20s per HTTP hop, with
+/// up to 5 redirect hops) -- this only ever matters for a claim whose
+/// owning attempt never reached its own release-or-confirm step at all
+/// (the app process was killed, crashed, or lost connectivity
+/// mid-flight), not for a normal slow request.
+const Duration kFailureNotificationClaimStaleAfter = Duration(minutes: 5);
 
 /// Whether -- and via what token -- one assessment currently has public
 /// sharing turned on. Mirrors the same typed-result-object pattern
@@ -30,9 +53,21 @@ class FirebaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   /// Upload Reference Photo
+  ///
+  /// Takes a [CapturedImage] -- the same cross-platform image currency
+  /// [GoogleDriveApi.uploadImage] and the Grooming Assessment upload
+  /// path (AssessmentService.uploadAssessmentPhoto) already use -- so
+  /// Reference Photo registration works the same way on every platform,
+  /// not just native. (It used to require a native `dart:io File`
+  /// specifically because the old validation gate,
+  /// PhotoValidationService's on-device ML Kit face check, only runs on
+  /// Android/iOS; now that Reference Photo is validated by
+  /// AssessmentApi.detectPerson -- the same cross-platform full-body
+  /// validator every other capture path in this app uses -- that
+  /// constraint no longer applies here either.)
   Future<DriveUploadResult> uploadPhoto({
     required String staff,
-    required File image,
+    required CapturedImage image,
   }) async {
     return await GoogleDriveApi.uploadImage(
       image: image,
@@ -50,7 +85,7 @@ class FirebaseService {
     required String name,
     required String trainer,
     required String date,
-    required File referencePhoto,
+    required CapturedImage referencePhoto,
   }) async {
     final participantRef = _firestore.collection("participants").doc(staff);
 
@@ -303,7 +338,13 @@ class FirebaseService {
     String? createdByUid,
   }) async {
     try {
-      await _firestore.collection("assessments").add({
+      // Captured once and reused below (both the assessment document
+      // itself and, for a failed score, the notification's
+      // assessmentDate) so the two never disagree by the few
+      // milliseconds a second Timestamp.now() call could drift.
+      final createdAt = Timestamp.now();
+
+      final assessmentRef = await _firestore.collection("assessments").add({
         "participantId": participantId,
         "participantName": participantName,
 
@@ -318,7 +359,7 @@ class FirebaseService {
 
         "criteria": criteria,
 
-        "createdAt": Timestamp.now(),
+        "createdAt": createdAt,
         "createdByUid": createdByUid,
       });
 
@@ -328,8 +369,21 @@ class FirebaseService {
 
       final participantDoc = await participantRef.get();
 
+      // Trainer Name is never stored on the assessment document itself
+      // (see AssessmentDetailScreen._loadExtras's identical lookup) --
+      // the Participant record is the one authoritative source, so the
+      // failure-notification email below reads it from here rather
+      // than from whatever the caller happened to have on hand (only
+      // the Staff Check-In entry point actually threads a trainerName
+      // through AssessmentResult; the Admin Assessment entry point does
+      // not, so relying on that would silently omit it for half of the
+      // app's real usage).
+      String? trainerName;
+
       if (participantDoc.exists) {
         final data = participantDoc.data()!;
+
+        trainerName = data["trainer"]?.toString();
 
         final currentCount = (data["assessmentCount"] ?? 0) as int;
 
@@ -341,10 +395,179 @@ class FirebaseService {
         });
       }
 
+      // Fire-and-forget, both of them: deliberately never awaited here.
+      // The Staff/Admin waiting on this save must never be blocked by,
+      // or ever find out about, how long email delivery or notification
+      // creation takes -- see _maybeNotifyAdminOfFailure's doc comment
+      // for the full reasoning. Whatever happens inside either call can
+      // never change this method's `return true` below or turn an
+      // already-successful save into a reported failure.
+      //
+      // The two are also independent of EACH OTHER, not just of this
+      // method -- each is its own unawaited call with its own internal
+      // try/catch, so the email failing can never stop the in-app
+      // notification from being created, and vice versa.
+      if (totalScore < kFailingScoreThreshold) {
+        unawaited(
+          _maybeNotifyAdminOfFailure(
+            assessmentId: assessmentRef.id,
+            participantId: participantId,
+            participantName: participantName,
+            trainerName: trainerName,
+            totalScore: totalScore,
+            overall: overall,
+            summary: summary,
+            suggestion: suggestion,
+            criteria: criteria,
+          ),
+        );
+
+        unawaited(
+          NotificationService().createFailedAssessmentNotification(
+            assessmentId: assessmentRef.id,
+            participantId: participantId,
+            participantName: participantName,
+            trainerName: trainerName,
+            totalScore: totalScore,
+            overall: overall,
+            assessmentDate: createdAt.toDate(),
+          ),
+        );
+      }
+
       return true;
     } catch (e) {
       debugPrint(e.toString());
       return false;
+    }
+  }
+
+  /// Background, best-effort admin email notification for one failed
+  /// (`totalScore < kFailingScoreThreshold`) assessment -- called
+  /// fire-and-forget from [saveAssessment], never awaited there, so a
+  /// slow or failing email step can never delay the save the Staff/
+  /// Admin is waiting on, and can never turn an already-successful save
+  /// into a reported failure. Every failure in here (Firestore read/
+  /// write, Apps Script call, network) is caught and logged, never
+  /// rethrown -- there is nothing above this method left to catch it.
+  ///
+  /// Unlike an earlier version of this method, this does NOT query
+  /// `users` for Admin email addresses at all -- Apps Script resolves
+  /// its own recipient list entirely server-side now (see Notify.gs's
+  /// doc comment), so this works identically whether [saveAssessment]
+  /// was called by a signed-in Admin (Participant Management ->
+  /// Assessment) or by the fully anonymous, no-auth Staff Check-In flow
+  /// -- neither one needs any Firestore permission this app didn't
+  /// already grant them, and neither one ever sees an Admin address.
+  ///
+  /// Atomic duplicate-send protection: claiming the right to attempt a
+  /// send is a single Firestore transaction that reads
+  /// `failureNotificationClaimedAt`/`failureNotificationSent` and, only
+  /// if neither is already set, writes `failureNotificationClaimedAt`
+  /// in that same atomic operation. Firestore transactions serialize
+  /// concurrent writes to the same document -- if this method is ever
+  /// invoked twice for the same [assessmentId] at genuinely the same
+  /// time, only one of the two transactions can win; the other's
+  /// `runTransaction` call sees the just-written claim and returns
+  /// `false` immediately, before either attempts to send anything. This
+  /// closes the exact read-then-write race a plain `get()` followed by
+  /// a separate `update()` cannot: two concurrent reads both observing
+  /// "not sent yet" before either write lands.
+  ///
+  /// `failureNotificationSent` is only ever written `true` *after* Apps
+  /// Script confirms the send succeeded. If the send fails, the claim
+  /// is released (`failureNotificationClaimedAt` cleared) rather than
+  /// left stuck -- a failed attempt is not a sent one, and does not
+  /// permanently block a future legitimate retry.
+  ///
+  /// A claim can still end up stranded despite that: if this process is
+  /// killed (crash, force-close, OS memory pressure) at any point after
+  /// the claim transaction commits but before either the release or the
+  /// confirm step runs, nothing is left to ever clear it. Rather than
+  /// let that block this assessment's notification forever (and make it
+  /// indistinguishable from "an attempt is genuinely in progress right
+  /// now" to any future retry logic), a claim older than
+  /// [kFailureNotificationClaimStaleAfter] is treated as abandoned and
+  /// is safe to reclaim -- see the transaction below.
+  Future<void> _maybeNotifyAdminOfFailure({
+    required String assessmentId,
+    required String participantId,
+    required String participantName,
+    String? trainerName,
+    required int totalScore,
+    required String overall,
+    required String summary,
+    required String suggestion,
+    required List<Map<String, dynamic>> criteria,
+  }) async {
+    final assessmentRef = _firestore
+        .collection("assessments")
+        .doc(assessmentId);
+
+    try {
+      final claimed = await _firestore.runTransaction<bool>((tx) async {
+        final snap = await tx.get(assessmentRef);
+        final data = snap.data();
+
+        if (data?["failureNotificationSent"] == true) return false;
+
+        final claimedAt = data?["failureNotificationClaimedAt"];
+        final hasLiveClaim =
+            claimedAt is Timestamp &&
+            DateTime.now().difference(claimedAt.toDate()) <
+                kFailureNotificationClaimStaleAfter;
+
+        if (hasLiveClaim) return false;
+
+        // Either genuinely unclaimed, or an abandoned claim older than
+        // the staleness window -- either way, (re-)claim it now.
+        tx.update(assessmentRef, {
+          "failureNotificationClaimedAt": FieldValue.serverTimestamp(),
+        });
+
+        return true;
+      });
+
+      if (!claimed) {
+        debugPrint(
+          "_maybeNotifyAdminOfFailure: $assessmentId already "
+          "claimed/sent, skipping.",
+        );
+        return;
+      }
+
+      final sent = await AssessmentApi().notifyAdminOfFailedAssessment(
+        assessmentId: assessmentId,
+        participantId: participantId,
+        participantName: participantName,
+        trainerName: trainerName,
+        totalScore: totalScore,
+        overall: overall,
+        summary: summary,
+        suggestion: suggestion,
+        criteria: criteria,
+      );
+
+      if (!sent) {
+        debugPrint(
+          "_maybeNotifyAdminOfFailure: Apps Script did not confirm "
+          "delivery for $assessmentId -- releasing claim, NOT marking sent.",
+        );
+
+        await assessmentRef.update({
+          "failureNotificationClaimedAt": FieldValue.delete(),
+        });
+
+        return;
+      }
+
+      await assessmentRef.update({
+        "failureNotificationSent": true,
+        "failureNotificationSentAt": FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      debugPrint("_maybeNotifyAdminOfFailure: $e");
+      // Never rethrown -- see doc comment above.
     }
   }
 

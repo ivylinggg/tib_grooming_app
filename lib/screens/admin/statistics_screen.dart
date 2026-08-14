@@ -245,6 +245,12 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             ),
             const SizedBox(height: 12),
 
+            // Deliberately not GridView.count with a fixed
+            // childAspectRatio -- a fixed cell height is exactly the
+            // overflow trap this whole pass is fixing elsewhere (see
+            // DashboardScreen._OverviewCard's doc comment). Two Rows of
+            // Expanded, content-sized cards can't overflow regardless
+            // of label length or device text-scale setting.
             Row(
               children: [
                 Expanded(
@@ -278,7 +284,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 Expanded(
                   child: _StatCard(
                     label: "Average Score",
-                    value: "${_averageScore.toStringAsFixed(1)}%",
+                    value: "${_averageScore.toStringAsFixed(1)}/60",
                     icon: Icons.analytics,
                   ),
                 ),

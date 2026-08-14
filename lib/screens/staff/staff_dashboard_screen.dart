@@ -298,7 +298,7 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Overall Score: $totalScore%",
+                  "Overall Score: $totalScore/60",
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

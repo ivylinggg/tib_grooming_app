@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+import 'dart:io' show SocketException;
 
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 
 import '../config/google_drive_config.dart';
+import '../models/captured_image.dart';
 
 /// What actually happened on a [GoogleDriveApi.uploadImage] call --
 /// replaces the old bare `String?` return, which collapsed every
@@ -80,10 +82,10 @@ class GoogleDriveApi {
   GoogleDriveApi._();
 
   static Future<DriveUploadResult> uploadImage({
-    required File image,
+    required CapturedImage image,
     required String fileName,
   }) async {
-    final client = HttpClient();
+    final client = http.Client();
 
     try {
       final bytes = await image.readAsBytes();
@@ -91,7 +93,7 @@ class GoogleDriveApi {
       final requestBody = jsonEncode({
         "image": base64Encode(bytes),
         "fileName": fileName,
-        "mimeType": _getMimeType(image.path),
+        "mimeType": _getMimeType(image.name),
       });
 
       // Apps Script Web App URLs (script.google.com/macros/s/.../exec)
@@ -314,44 +316,56 @@ class GoogleDriveApi {
   /// the `Cookie` header when following a later hop of a redirect
   /// chain, and always reports any `Set-Cookie` the response sent back
   /// so the caller can carry it to the next hop.
+  ///
+  /// Uses `package:http` (cross-platform) instead of a raw `dart:io
+  /// HttpClient`, which throws `UnsupportedError` the instant it's
+  /// constructed on Flutter Web -- see AssessmentApi._send's doc comment
+  /// for the full explanation; this mirrors that fix exactly.
+  /// `followRedirects = false` is only set on native platforms, where
+  /// `package:http`'s default client is itself backed by
+  /// `dart:io.HttpClient` and honors it identically to before. On web,
+  /// the browser's fetch/XHR layer always follows a redirect before Dart
+  /// ever sees the response, so `followRedirects` is left at its
+  /// default there and this loop's `_isRedirect` check simply never
+  /// fires.
   static Future<_RawHttpResult> _send(
-    HttpClient client, {
+    http.Client client, {
     required String method,
     required Uri url,
     String? body,
     String? cookie,
   }) async {
-    final request = await client.openUrl(method, url);
-    request.followRedirects = false;
+    final request = http.Request(method, url);
+
+    if (!kIsWeb) {
+      request.followRedirects = false;
+      request.maxRedirects = 0;
+    }
 
     // A plain Dart HttpClient sends no User-Agent by default. Google's
     // frontend has been observed treating User-Agent-less requests to
     // script.google.com differently (an extra interstitial/redirect
     // hop) -- sending one that looks like a normal HTTP client keeps
     // this on the same path a browser or curl would take.
-    request.headers.set(HttpHeaders.userAgentHeader, "tib-grooming-app/1.0");
+    request.headers["User-Agent"] = "tib-grooming-app/1.0";
 
     if (cookie != null && cookie.isNotEmpty) {
-      request.headers.set(HttpHeaders.cookieHeader, cookie);
+      request.headers["Cookie"] = cookie;
     }
 
     if (body != null) {
-      request.headers.set(HttpHeaders.contentTypeHeader, "application/json");
-      request.write(body);
+      request.headers["Content-Type"] = "application/json";
+      request.body = body;
     }
 
-    final response = await request.close();
-    final responseBody = await response.transform(utf8.decoder).join();
-
-    final setCookie = response.cookies.isEmpty
-        ? null
-        : response.cookies.map((c) => "${c.name}=${c.value}").join("; ");
+    final streamedResponse = await client.send(request);
+    final response = await http.Response.fromStream(streamedResponse);
 
     return _RawHttpResult(
       statusCode: response.statusCode,
-      body: responseBody,
-      location: response.headers.value(HttpHeaders.locationHeader),
-      setCookie: setCookie,
+      body: response.body,
+      location: response.headers["location"],
+      setCookie: response.headers["set-cookie"],
     );
   }
 

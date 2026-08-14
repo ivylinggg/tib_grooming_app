@@ -1,12 +1,44 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 
 import '../models/overall_result.dart';
+
+/// What happened when [PdfService.exportAssessmentPdf] or
+/// [PdfService.downloadAssessmentPdf] tried to save the generated PDF.
+/// [cancelled] is deliberately distinct from a thrown exception -- the
+/// user closing the native Save dialog without picking a location is a
+/// normal, real outcome, not a failure, and must never be reported as
+/// either a success or an error (see AssessmentDetailScreen._exportPdf/
+/// _downloadPdf for how callers branch on this).
+enum PdfExportOutcome { saved, cancelled }
+
+class PdfExportResult {
+  final PdfExportOutcome outcome;
+
+  /// The path/identifier `file_picker` returned for the saved file, if
+  /// available on this platform. Shown to the user so "where did it go"
+  /// has a real, specific answer instead of a generic message.
+  final String? savedPath;
+
+  const PdfExportResult({required this.outcome, this.savedPath});
+}
+
+/// A generated PDF's raw bytes plus the filename both export paths use,
+/// so [PdfService._buildPdfBytes] stays the single place that ever
+/// builds the document -- Save PDF and Download PDF must always produce
+/// byte-identical content, only the save mechanism differs.
+class _BuiltPdf {
+  final Uint8List bytes;
+  final String filename;
+
+  const _BuiltPdf({required this.bytes, required this.filename});
+}
 
 /// Builds a real, downloadable/shareable `.pdf` file for one grooming
 /// assessment -- a proper generated document (text, tables, embedded
@@ -22,21 +54,131 @@ import '../models/overall_result.dart';
 /// building the PDF from the same raw map the screen already displays
 /// keeps this in sync with what's genuinely on screen instead of
 /// re-deriving a second, subtly different data shape.
+///
+/// Two separate, real save actions are exposed -- [exportAssessmentPdf]
+/// ("Save PDF") and [downloadAssessmentPdf] ("Download PDF") -- both
+/// write the actual generated PDF to a real, user-accessible location
+/// via `file_picker`'s native Save dialog (`FilePicker.platform.
+/// saveFile`), never merely a share-sheet invocation. On Android this
+/// goes through the Storage Access Framework, so the bytes are
+/// genuinely written to wherever the OS dialog resolves -- no runtime
+/// storage permission needed, and nothing here depends on the user
+/// later having to go hunt down a temporary cache file themselves.
+///
+/// Neither method reports success itself: callers must check
+/// [PdfExportResult.outcome] before showing any "PDF saved" message --
+/// the user closing the Save dialog without picking anywhere
+/// ([PdfExportOutcome.cancelled]) is a normal outcome, not an error.
 class PdfService {
   static const PdfColor _brandBlue = PdfColor.fromInt(0xFF1F3D73);
 
-  /// Generates the PDF and immediately hands it to the OS share/save
-  /// sheet via `Printing.sharePdf` -- which writes the bytes to a real,
-  /// Android-scoped-storage-safe temporary file and invokes the native
-  /// share intent itself; nothing here writes to an arbitrary raw
-  /// filesystem path, and there is no "success" reported unless this
-  /// completes without throwing.
+  /// "Save PDF" -- opens the native Save dialog wherever the OS/user
+  /// last left it, letting the user pick any folder and filename for
+  /// this export. This is the pre-existing Export PDF action; kept
+  /// exactly as before, just backed by a real Save dialog instead of
+  /// the OS share sheet.
   ///
   /// [trainerName] is looked up separately by the caller (from the
   /// linked Participant record -- see FirebaseService.getParticipant)
   /// since it is never stored on the assessment document itself; null
   /// or empty renders as "Not available", never invented.
-  Future<void> exportAndShareAssessmentPdf({
+  Future<PdfExportResult> exportAssessmentPdf({
+    required Map<String, dynamic> assessmentData,
+    String? trainerName,
+  }) async {
+    final built = await _buildPdfBytes(
+      assessmentData: assessmentData,
+      trainerName: trainerName,
+    );
+
+    final path = await FilePicker.platform.saveFile(
+      dialogTitle: "Save Grooming Result PDF",
+      fileName: built.filename,
+      type: FileType.custom,
+      allowedExtensions: ["pdf"],
+      bytes: built.bytes,
+    );
+
+    if (path == null) {
+      return const PdfExportResult(outcome: PdfExportOutcome.cancelled);
+    }
+
+    return PdfExportResult(outcome: PdfExportOutcome.saved, savedPath: path);
+  }
+
+  /// "Download PDF" -- a second, independent real-file action, distinct
+  /// from [exportAssessmentPdf]. It is never `Printing.sharePdf()`
+  /// relabeled: it goes through the same real `file_picker` Save-file
+  /// write [exportAssessmentPdf] uses, so the downloaded file genuinely
+  /// exists at the path the OS reports back.
+  ///
+  /// The functional difference from "Save PDF": on desktop platforms
+  /// (Windows/macOS/Linux), this pre-navigates the Save dialog straight
+  /// to the user's real Downloads folder (see
+  /// [_tryDefaultDownloadDirectory]) -- a genuine one-tap "download"
+  /// instead of wherever the dialog last happened to be left. On
+  /// Android/iOS, `file_picker` does not expose a way to skip the
+  /// Storage-Access-Framework/document-picker dialog entirely without
+  /// either a runtime storage permission this app does not request or
+  /// an additional native-code dependency this project does not have --
+  /// so on those platforms the dialog still appears, defaulting (as SAF
+  /// itself does) to the most recently used location, which is very
+  /// often already Downloads once a user has picked it once. This is a
+  /// real platform constraint, not a shortcut: it is documented here
+  /// rather than silently pretending the two actions are identical
+  /// everywhere.
+  Future<PdfExportResult> downloadAssessmentPdf({
+    required Map<String, dynamic> assessmentData,
+    String? trainerName,
+  }) async {
+    final built = await _buildPdfBytes(
+      assessmentData: assessmentData,
+      trainerName: trainerName,
+    );
+
+    final path = await FilePicker.platform.saveFile(
+      dialogTitle: "Download Grooming Result PDF",
+      fileName: built.filename,
+      type: FileType.custom,
+      allowedExtensions: ["pdf"],
+      bytes: built.bytes,
+      initialDirectory: _tryDefaultDownloadDirectory(),
+    );
+
+    if (path == null) {
+      return const PdfExportResult(outcome: PdfExportOutcome.cancelled);
+    }
+
+    return PdfExportResult(outcome: PdfExportOutcome.saved, savedPath: path);
+  }
+
+  /// Best-effort real Downloads folder path on desktop platforms only,
+  /// built from `dart:io`'s `Platform.environment` -- no new dependency
+  /// (`path_provider` is not in pubspec.yaml, and is not added just for
+  /// this). Returns null on Android/iOS/web (where `file_picker` does
+  /// not honor `initialDirectory` anyway) or if the relevant home-
+  /// directory environment variable is not set, in which case
+  /// `file_picker` simply falls back to its own default behavior.
+  String? _tryDefaultDownloadDirectory() {
+    try {
+      if (Platform.isWindows) {
+        final home = Platform.environment["USERPROFILE"];
+        return (home == null || home.isEmpty) ? null : "$home\\Downloads";
+      }
+
+      if (Platform.isMacOS || Platform.isLinux) {
+        final home = Platform.environment["HOME"];
+        return (home == null || home.isEmpty) ? null : "$home/Downloads";
+      }
+    } catch (_) {
+      // Platform.isWindows/etc. can throw on unsupported embedders --
+      // fall through to "no hint" rather than failing the export.
+    }
+
+    return null;
+  }
+
+  Future<_BuiltPdf> _buildPdfBytes({
     required Map<String, dynamic> assessmentData,
     String? trainerName,
   }) async {
@@ -121,7 +263,7 @@ class PdfService {
     final fileDate = _formatFileDate(createdAt);
     final filename = "TIB_Grooming_Result_${filenameStaffId}_$fileDate.pdf";
 
-    await Printing.sharePdf(bytes: bytes, filename: filename);
+    return _BuiltPdf(bytes: bytes, filename: filename);
   }
 
   pw.Widget _buildHeader() {
@@ -232,7 +374,7 @@ class PdfService {
           ),
           pw.SizedBox(height: 6),
           pw.Text(
-            "Overall Score: $totalScore%",
+            "Overall Score: $totalScore/60",
             style: const pw.TextStyle(fontSize: 13),
           ),
         ],
