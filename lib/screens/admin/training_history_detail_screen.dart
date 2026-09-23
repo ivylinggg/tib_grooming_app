@@ -310,7 +310,7 @@ class _PhotoGrid extends StatelessWidget {
               : Image.network(
                   url,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const ColoredBox(
+                  errorBuilder: (context, error, stackTrace) => const ColoredBox(
                     color: Color(0xFFEDEDED),
                     child: Center(
                       child: Icon(
