@@ -18,6 +18,7 @@ import 'participant_profile_screen.dart';
 import 'staff_management_screen.dart';
 import 'staff_profile_screen.dart';
 import 'statistics_screen.dart';
+import 'training_history_screen.dart';
 
 /// Admin's home screen. Only ever reached from RoleSelectionScreen's
 /// Admin choice, but that alone doesn't prove the *current* session is
@@ -638,6 +639,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   await Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const StatisticsScreen()),
+                  );
+                },
+              ),
+
+              _DashboardButton(
+                icon: Icons.history_edu_outlined,
+                title: "Training History",
+                subtitle: "Search previous training records by participant name",
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const TrainingHistoryScreen(),
+                    ),
                   );
                 },
               ),
