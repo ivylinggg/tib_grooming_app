@@ -1,12 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// A historical grooming/training record imported from the team's legacy
-/// training reports.
-///
-/// Historical records are intentionally independent from the current
-/// `participants/{staffId}` and `assessments` collections. The legacy
-/// reports identify people by name, so [participantName] is the primary
-/// lookup field for this feature.
 class TrainingHistory {
   final String id;
   final String participantName;
@@ -38,7 +31,6 @@ class TrainingHistory {
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) {
     final data = doc.data() ?? <String, dynamic>{};
-
     final rawPhotos = data['photoUrls'];
     final photos = rawPhotos is Iterable
         ? rawPhotos.map((value) => value.toString()).toList()
