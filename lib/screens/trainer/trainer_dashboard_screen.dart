@@ -4,6 +4,7 @@ import '../../core/theme/app_theme.dart';
 import '../../services/auth_service.dart';
 import '../admin/training_history_screen.dart';
 import '../auth/login_screen.dart';
+import 'trainer_history_editor_screen.dart';
 
 class TrainerDashboardScreen extends StatelessWidget {
   const TrainerDashboardScreen({super.key});
@@ -14,10 +15,16 @@ class TrainerDashboardScreen extends StatelessWidget {
     if (!context.mounted) return;
 
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (_) => const LoginScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
       (route) => false,
+    );
+  }
+
+  Future<void> _addTrainingReport(BuildContext context) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const TrainerHistoryEditorScreen(),
+      ),
     );
   }
 
@@ -66,7 +73,7 @@ class TrainerDashboardScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 8),
                     Text(
-                      'Manage historical training reports, participant reviews and training photos.',
+                      'Manage training history, reports, trainer reviews and training photos.',
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: 14,
@@ -77,6 +84,18 @@ class TrainerDashboardScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
+              SizedBox(
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: () => _addTrainingReport(context),
+                  icon: const Icon(Icons.add),
+                  label: const Text(
+                    'Add Training Report',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
               Card(
                 margin: EdgeInsets.zero,
                 shape: RoundedRectangleBorder(
@@ -122,7 +141,7 @@ class TrainerDashboardScreen extends StatelessWidget {
                               ),
                               SizedBox(height: 5),
                               Text(
-                                'View, search and manage historical training reports.',
+                                'View and manage historical training reports.',
                                 style: TextStyle(
                                   color: Colors.black54,
                                   height: 1.4,
