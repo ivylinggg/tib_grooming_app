@@ -13,63 +13,25 @@ class TrainerDriveService {
   Future<String> uploadTrainingPhoto({
     required List<int> bytes,
     required String fileName,
+    String mimeType = 'image/jpeg',
     required String trainingDate,
     required String participantName,
   }) async {
-    final payload = <String, dynamic>{
-      'action': 'uploadTrainingHistoryPhoto',
+    final payload = jsonEncode(<String, dynamic>{
       'image': base64Encode(bytes),
       'fileName': fileName,
+      'mimeType': mimeType,
       'trainingDate': trainingDate.trim(),
       'participantName': participantName.trim(),
-    };
+    });
 
-    final response = await _postWithRedirects(
-      Uri.parse(uploadEndpoint),
-      payload,
-    );
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw TrainerDriveException(
-        'Drive upload failed (HTTP ${response.statusCode}).',
-      );
-    }
-
-    final body = jsonDecode(response.body);
-
-    if (body is! Map<String, dynamic>) {
-      throw const TrainerDriveException('Invalid upload response.');
-    }
-
-    final success = body['success'] == true;
-    final url = body['url']?.toString().trim() ?? '';
-
-    if (!success || url.isEmpty) {
-      final message = body['message']?.toString().trim();
-      throw TrainerDriveException(
-        message == null || message.isEmpty
-            ? 'The upload service did not return a photo URL.'
-            : message,
-      );
-    }
-
-    return url;
-  }
-
-  Future<http.Response> _postWithRedirects(
-    Uri uri,
-    Map<String, dynamic> payload,
-  ) async {
-    var currentUri = uri;
-    var body = jsonEncode(payload);
+    var uri = Uri.parse(uploadEndpoint);
 
     for (var attempt = 0; attempt < 5; attempt++) {
       final response = await _client.post(
-        currentUri,
-        headers: const {
-          'Content-Type': 'application/json',
-        },
-        body: body,
+        uri,
+        headers: const {'Content-Type': 'application/json'},
+        body: payload,
       );
 
       final location = response.headers['location'];
@@ -79,11 +41,45 @@ class TrainerDriveService {
           response.statusCode == 307 ||
           response.statusCode == 308;
 
-      if (!isRedirect || location == null || location.isEmpty) {
-        return response;
+      if (isRedirect && location != null && location.isNotEmpty) {
+        uri = uri.resolve(location);
+        continue;
       }
 
-      currentUri = currentUri.resolve(location);
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw TrainerDriveException(
+          'Drive upload failed (HTTP ${response.statusCode}).',
+        );
+      }
+
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        throw const TrainerDriveException('Invalid upload response.');
+      }
+
+      if (decoded['success'] != true) {
+        final error = decoded['error']?.toString().trim();
+        final message = decoded['message']?.toString().trim();
+        throw TrainerDriveException(
+          error != null && error.isNotEmpty
+              ? error
+              : message != null && message.isNotEmpty
+                  ? message
+                  : 'The upload service reported a failure.',
+        );
+      }
+
+      final imageUrl = decoded['imageUrl']?.toString().trim();
+      final url = decoded['url']?.toString().trim();
+      final result = imageUrl != null && imageUrl.isNotEmpty ? imageUrl : url;
+
+      if (result == null || result.isEmpty) {
+        throw const TrainerDriveException(
+          'The upload service did not return an image URL.',
+        );
+      }
+
+      return result;
     }
 
     throw const TrainerDriveException(
