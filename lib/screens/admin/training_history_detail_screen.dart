@@ -287,52 +287,113 @@ class _PhotoGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: photoUrls.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 1,
-      ),
-      itemBuilder: (context, index) {
-        final url = photoUrls[index].trim();
+    return Column(
+      children: photoUrls
+          .where((url) => url.trim().isNotEmpty)
+          .map(
+            (url) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _PhotoTile(url: url.trim()),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
 
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: url.isEmpty
-              ? const ColoredBox(
-                  color: Color(0xFFEDEDED),
-                  child: Icon(Icons.broken_image_outlined),
-                )
-              : Image.network(
-                  url,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => const ColoredBox(
-                    color: Color(0xFFEDEDED),
-                    child: Center(
-                      child: Icon(
-                        Icons.broken_image_outlined,
-                        size: 30,
-                        color: Colors.black45,
-                      ),
-                    ),
-                  ),
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
+class _PhotoTile extends StatelessWidget {
+  const _PhotoTile({required this.url});
 
-                    return const ColoredBox(
-                      color: Color(0xFFF3F3F3),
-                      child: Center(
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    );
-                  },
-                ),
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => _FullScreenPhotoViewer(url: url),
+          ),
         );
       },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: AspectRatio(
+          aspectRatio: 0.75,
+          child: Image.network(
+            url,
+            width: double.infinity,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) => const ColoredBox(
+              color: Color(0xFFEDEDED),
+              child: Center(
+                child: Icon(
+                  Icons.broken_image_outlined,
+                  size: 30,
+                  color: Colors.black45,
+                ),
+              ),
+            ),
+            loadingBuilder: (context, child, progress) {
+              if (progress == null) return child;
+
+              return const ColoredBox(
+                color: Color(0xFFF3F3F3),
+                child: Center(
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FullScreenPhotoViewer extends StatelessWidget {
+  const _FullScreenPhotoViewer({required this.url});
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: const Text('Training Photo'),
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          minScale: 0.8,
+          maxScale: 4,
+          child: Image.network(
+            url,
+            fit: BoxFit.contain,
+            width: double.infinity,
+            height: double.infinity,
+            errorBuilder: (context, error, stackTrace) => const Center(
+              child: Icon(
+                Icons.broken_image_outlined,
+                color: Colors.white54,
+                size: 48,
+              ),
+            ),
+            loadingBuilder: (context, child, progress) {
+              if (progress == null) return child;
+
+              return const Center(
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                ),
+              );
+            },
+          ),
+        ),
+      ),
     );
   }
 }
