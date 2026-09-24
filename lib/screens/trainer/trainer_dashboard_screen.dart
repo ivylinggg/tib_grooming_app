@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../services/auth_service.dart';
-import '../admin/training_history_screen.dart';
 import '../auth/login_screen.dart';
 import 'trainer_history_editor_screen.dart';
+import 'trainer_training_history_screen.dart';
 
 class TrainerDashboardScreen extends StatelessWidget {
   const TrainerDashboardScreen({super.key});
@@ -21,9 +21,23 @@ class TrainerDashboardScreen extends StatelessWidget {
   }
 
   Future<void> _addTrainingReport(BuildContext context) async {
-    await Navigator.of(context).push(
+    final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) => const TrainerHistoryEditorScreen(),
+      ),
+    );
+
+    if (saved == true && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Training report created.')),
+      );
+    }
+  }
+
+  void _openHistory(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const TrainerTrainingHistoryScreen(),
       ),
     );
   }
@@ -103,13 +117,7 @@ class TrainerDashboardScreen extends StatelessWidget {
                 ),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(18),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const TrainingHistoryScreen(),
-                      ),
-                    );
-                  },
+                  onTap: () => _openHistory(context),
                   child: Padding(
                     padding: const EdgeInsets.all(20),
                     child: Row(
@@ -141,7 +149,7 @@ class TrainerDashboardScreen extends StatelessWidget {
                               ),
                               SizedBox(height: 5),
                               Text(
-                                'View and manage historical training reports.',
+                                'Search, edit and manage historical training records.',
                                 style: TextStyle(
                                   color: Colors.black54,
                                   height: 1.4,
