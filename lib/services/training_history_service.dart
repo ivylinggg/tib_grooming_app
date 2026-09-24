@@ -85,6 +85,61 @@ class TrainingHistoryService {
     }
   }
 
+  Future<String> createRecord(TrainingHistory record) async {
+    try {
+      final data = record.toFirestore();
+      data['createdAt'] = FieldValue.serverTimestamp();
+      final ref = await _firestore.collection(collectionName).add(data);
+      return ref.id;
+    } catch (e) {
+      throw TrainingHistoryException(
+        'Unable to create the training record.',
+        e,
+      );
+    }
+  }
+
+  Future<void> updateRecord(
+    String id,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      await _firestore.collection(collectionName).doc(id).update(data);
+    } catch (e) {
+      throw TrainingHistoryException(
+        'Unable to update the training record.',
+        e,
+      );
+    }
+  }
+
+  Future<void> updatePhotos(
+    String id,
+    List<String> photoUrls,
+  ) async {
+    try {
+      await _firestore.collection(collectionName).doc(id).update({
+        'photoUrls': photoUrls,
+      });
+    } catch (e) {
+      throw TrainingHistoryException(
+        'Unable to update training photos.',
+        e,
+      );
+    }
+  }
+
+  Future<void> deleteRecord(String id) async {
+    try {
+      await _firestore.collection(collectionName).doc(id).delete();
+    } catch (e) {
+      throw TrainingHistoryException(
+        'Unable to delete the training record.',
+        e,
+      );
+    }
+  }
+
   int _compareTrainingDatesDescending(
     TrainingHistory a,
     TrainingHistory b,
