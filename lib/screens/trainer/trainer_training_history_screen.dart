@@ -85,6 +85,57 @@ class _TrainerTrainingHistoryScreenState
     if (saved == true) await _load();
   }
 
+  Future<void> _deleteRecord(TrainingHistory record) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Training Record?'),
+        content: Text(
+          'Delete the training record for ' +
+              (record.participantName.isEmpty
+                  ? 'this participant'
+                  : record.participantName) +
+              '?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await _service.deleteRecord(record.id);
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Training record deleted.')),
+      );
+
+      await _load();
+    } on TrainingHistoryException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Future<void> _editRecord(TrainingHistory record) async {
     final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
@@ -123,10 +174,35 @@ class _TrainerTrainingHistoryScreenState
           ),
         ),
         isThreeLine: true,
-        trailing: IconButton(
-          tooltip: 'Edit',
-          onPressed: () => _editRecord(record),
-          icon: const Icon(Icons.edit_outlined),
+        trailing: PopupMenuButton<String>(
+          onSelected: (value) {
+            if (value == 'edit') {
+              _editRecord(record);
+            } else if (value == 'delete') {
+              _deleteRecord(record);
+            }
+          },
+          itemBuilder: (context) => const [
+            PopupMenuItem(
+              value: 'edit',
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.edit_outlined),
+                title: Text('Edit'),
+              ),
+            ),
+            PopupMenuItem(
+              value: 'delete',
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.delete_outline, color: Colors.red),
+                title: Text(
+                  'Delete',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ),
+          ],
         ),
         onTap: () => _editRecord(record),
       ),
