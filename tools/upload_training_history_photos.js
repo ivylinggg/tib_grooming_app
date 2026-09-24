@@ -15,11 +15,15 @@ const serviceAccount = require(process.env.GOOGLE_APPLICATION_CREDENTIALS);
 initializeApp({
   credential: cert(serviceAccount),
   projectId: 'tib-grooming',
-  storageBucket: 'tib-grooming.firebasestorage.app',
 });
 
 const db = getFirestore();
-const bucket = getStorage().bucket();
+const configuredBucketName =
+  process.env.FIREBASE_STORAGE_BUCKET ||
+  process.env.GCLOUD_STORAGE_BUCKET ||
+  serviceAccount.project_id + '.appspot.com';
+
+const bucket = getStorage().bucket(configuredBucketName);
 
 const PHOTO_ROOT = path.resolve(__dirname, '../training_final');
 
@@ -101,6 +105,10 @@ function listImages(dir) {
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 }
 
+function publicUrl(bucketName, storagePath) {
+  return `https://storage.googleapis.com/${bucketName}/${storagePath.split('/').map(encodeURIComponent).join('/')}`;
+}
+
 async function upload(localPath, storagePath) {
   await bucket.upload(localPath, {
     destination: storagePath,
@@ -110,16 +118,18 @@ async function upload(localPath, storagePath) {
     },
   });
 
-  const file = bucket.file(storagePath);
-  await file.makePublic();
-
-  return `https://storage.googleapis.com/${bucket.name}/${storagePath.split('/').map(encodeURIComponent).join('/')}`;
+  return publicUrl(bucket.name, storagePath);
 }
 
 async function main() {
+  if (!fs.existsSync(PHOTO_ROOT)) {
+    throw new Error(`Photo root not found: ${PHOTO_ROOT}`);
+  }
+
   let updated = 0;
   let skipped = 0;
 
+  console.log(`Using Storage bucket: ${bucket.name}`);
   console.log(`Starting photo import for ${records.length} history records...`);
 
   for (const [docId, date, name] of records) {
