@@ -13,135 +13,141 @@ class LoginPortal extends StatelessWidget {
       backgroundColor: AppTheme.background,
       body: SafeArea(
         child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(30, 55, 30, 45),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF234A84), Color(0xFF1F3D73)],
+                padding: const EdgeInsets.fromLTRB(24, 30, 24, 30),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppTheme.primary, AppTheme.primaryDark],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(35),
-                    bottomRight: Radius.circular(35),
-                  ),
+                  borderRadius: BorderRadius.circular(28),
                 ),
                 child: Column(
                   children: [
                     Container(
-                      width: 90,
-                      height: 90,
+                      width: 74,
+                      height: 74,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Colors.white.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(22),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.18),
+                        ),
                       ),
                       child: const Icon(
                         Icons.flight_takeoff_rounded,
-                        color: AppTheme.primary,
-                        size: 48,
+                        color: Colors.white,
+                        size: 40,
                       ),
                     ),
-
-                    const SizedBox(height: 25),
-
+                    const SizedBox(height: 22),
                     const Text(
-                      "BATIK AIR",
+                      'BATIK AIR',
                       style: TextStyle(
-                        color: Color(0xFFE5C27A),
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 4,
+                        color: AppTheme.accent,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 3,
                       ),
                     ),
-
-                    const SizedBox(height: 15),
-
+                    const SizedBox(height: 10),
                     const Text(
-                      "Grooming Assessment\nSystem",
+                      'Grooming Assessment',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 34,
-                        fontWeight: FontWeight.bold,
-                        height: 1.2,
+                        fontSize: 30,
+                        fontWeight: FontWeight.w700,
+                        height: 1.15,
                       ),
                     ),
-
-                    const SizedBox(height: 18),
-
+                    const SizedBox(height: 4),
                     const Text(
-                      "Choose your role to continue.",
+                      'System',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 15,
+                        color: AppTheme.accent,
+                        fontSize: 30,
+                        fontWeight: FontWeight.w500,
+                        height: 1.15,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Professional grooming assessment for cabin crew and training teams.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.72),
+                        fontSize: 14,
                         height: 1.5,
                       ),
                     ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 35),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 22),
-                child: _RoleCard(
-                  icon: Icons.admin_panel_settings_rounded,
-                  title: "Trainer Administrator",
-                  subtitle:
-                      "Manage participants, AI grooming assessments, reports and system data.",
-                  buttonText: "ENTER ADMIN PORTAL",
-                  color: AppTheme.primary,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const DashboardScreen(),
-                      ),
-                    );
-                  },
+              const SizedBox(height: 28),
+              const Text(
+                'Choose portal',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.text,
                 ),
               ),
-
-              const SizedBox(height: 22),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 22),
-                child: _RoleCard(
-                  icon: Icons.badge_rounded,
-                  title: "Cabin Crew",
-                  subtitle:
-                      "Daily grooming check-in and AI appearance assessment.",
-                  buttonText: "ENTER STAFF PORTAL",
-                  color: AppTheme.secondary,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const CheckInScreen()),
-                    );
-                  },
+              const SizedBox(height: 6),
+              const Text(
+                'Select the workspace you need to access.',
+                style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+              _RoleCard(
+                icon: Icons.admin_panel_settings_outlined,
+                title: 'Trainer Administrator',
+                subtitle:
+                    'Manage participants, AI assessments, reports and system records.',
+                buttonText: 'Enter Admin Portal',
+                color: AppTheme.primary,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const DashboardScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 14),
+              _RoleCard(
+                icon: Icons.badge_outlined,
+                title: 'Cabin Crew',
+                subtitle:
+                    'Complete daily grooming check-in and appearance assessment.',
+                buttonText: 'Enter Staff Portal',
+                color: AppTheme.secondary,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CheckInScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 24),
+              Center(
+                child: Text(
+                  'Version 1.0.0  •  Batik Air Digital Innovation',
+                  style: const TextStyle(
+                    color: AppTheme.textMuted,
+                    fontSize: 11,
+                  ),
                 ),
               ),
-
-              const SizedBox(height: 30),
-
-              const Text(
-                "Version 1.0.0",
-                style: TextStyle(color: Colors.grey, fontSize: 13),
-              ),
-
-              const SizedBox(height: 8),
-
-              const Text(
-                "Powered by Batik Air Digital Innovation",
-                style: TextStyle(color: Colors.grey, fontSize: 12),
-              ),
-
-              const SizedBox(height: 25),
             ],
           ),
         ),
@@ -170,71 +176,62 @@ class _RoleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface,
         borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        border: Border.all(color: AppTheme.border),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 34,
-            backgroundColor: color.withValues(alpha: 0.12),
-            child: Icon(icon, color: color, size: 34),
-          ),
-
-          const SizedBox(height: 18),
-
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF162B56),
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          Text(
-            subtitle,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 15,
-              color: Colors.black54,
-              height: 1.6,
-            ),
-          ),
-
-          const SizedBox(height: 25),
-
-          SizedBox(
-            width: double.infinity,
-            height: 54,
-            child: ElevatedButton.icon(
-              onPressed: onPressed,
-              icon: const Icon(Icons.arrow_forward_rounded),
-              label: Text(
-                buttonText,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+          Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(icon, color: color, size: 27),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: AppTheme.text,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-              style: ElevatedButton.styleFrom(
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              color: AppTheme.textMuted,
+              fontSize: 13,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 18),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: onPressed,
+              icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+              label: Text(buttonText),
+              style: FilledButton.styleFrom(
                 backgroundColor: color,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                foregroundColor:
+                    color == AppTheme.secondary ? AppTheme.primaryDark : Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(14)),
                 ),
               ),
             ),
