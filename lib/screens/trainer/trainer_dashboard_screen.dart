@@ -55,7 +55,7 @@ class TrainerDashboardScreen extends StatelessWidget {
             tooltip: 'Switch Portal',
             onPressed: () async {
               final appUser = await AuthService().getCurrentAppUser();
-              if (!mounted) return;
+              if (!context.mounted) return;
               if (appUser != null && appUser.roles.length > 1) {
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
