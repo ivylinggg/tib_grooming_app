@@ -162,132 +162,205 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(
-                  width: 88,
-                  height: 88,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primary,
-                    borderRadius: BorderRadius.circular(22),
-                  ),
-                  child: const Icon(
-                    Icons.flight_takeoff_rounded,
-                    size: 46,
-                    color: Colors.white,
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                const Text(
-                  "Sign In",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-                ),
-
-                const SizedBox(height: 6),
-
-                const Text(
-                  "Grooming Assessment System",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.black54),
-                ),
-
-                const SizedBox(height: 32),
-
-                TextField(
-                  controller: emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: "Email",
-                    prefixIcon: Icon(Icons.email_outlined),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                TextField(
-                  controller: passwordController,
-                  obscureText: obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: "Password",
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
+            padding: const EdgeInsets.fromLTRB(22, 28, 22, 32),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 460),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(22, 24, 22, 22),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppTheme.primary, AppTheme.primaryDark],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                      onPressed: () {
-                        setState(() {
-                          obscurePassword = !obscurePassword;
-                        });
-                      },
+                      borderRadius: BorderRadius.circular(26),
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 68,
+                          height: 68,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.16),
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.flight_takeoff_rounded,
+                            color: Colors.white,
+                            size: 38,
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        const Text(
+                          'BATIK AIR',
+                          style: TextStyle(
+                            color: AppTheme.accent,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 2.6,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Grooming Assessment',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 27,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        const Text(
+                          'Sign in to continue',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-
-                CheckboxListTile(
-                  value: rememberMe,
-                  onChanged: isLoading
-                      ? null
-                      : (value) {
-                          setState(() {
-                            rememberMe = value ?? false;
-                          });
-                        },
-                  title: const Text("Remember me"),
-                  controlAffinity: ListTileControlAffinity.leading,
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
-                ),
-
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: isLoading
-                        ? null
-                        : () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const ForgotPasswordScreen(),
-                              ),
-                            );
-                          },
-                    child: const Text("Forgot Password?"),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Welcome back',
+                    style: TextStyle(
+                      color: AppTheme.text,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-
-                const SizedBox(height: 8),
-
-                ElevatedButton(
-                  onPressed: isLoading ? null : _signIn,
-                  child: Text(isLoading ? "Signing in..." : "Sign In"),
-                ),
-
-                const SizedBox(height: 12),
-
-                Center(
-                  child: TextButton(
-                    onPressed: isLoading
-                        ? null
-                        : () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const SignUpScreen(),
-                              ),
-                            );
-                          },
-                    child: const Text("Don't have an account? Sign Up"),
+                  const SizedBox(height: 5),
+                  const Text(
+                    'Use your registered account to access the grooming workspace.',
+                    style: TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 12,
+                      height: 1.45,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 20),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          TextField(
+                            controller: emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: const InputDecoration(
+                              labelText: 'Email',
+                              prefixIcon: Icon(Icons.email_outlined),
+                            ),
+                          ),
+                          const SizedBox(height: 13),
+                          TextField(
+                            controller: passwordController,
+                            obscureText: obscurePassword,
+                            decoration: InputDecoration(
+                              labelText: 'Password',
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  obscurePassword
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    obscurePassword = !obscurePassword;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          CheckboxListTile(
+                            value: rememberMe,
+                            onChanged: isLoading
+                                ? null
+                                : (value) {
+                                    setState(() {
+                                      rememberMe = value ?? false;
+                                    });
+                                  },
+                            title: const Text(
+                              'Remember me',
+                              style: TextStyle(fontSize: 13),
+                            ),
+                            controlAffinity: ListTileControlAffinity.leading,
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                          ),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: isLoading
+                                  ? null
+                                  : () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              const ForgotPasswordScreen(),
+                                        ),
+                                      );
+                                    },
+                              child: const Text('Forgot password?'),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              onPressed: isLoading ? null : _signIn,
+                              child: Text(
+                                isLoading ? 'Signing in...' : 'Sign In',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Center(
+                            child: TextButton(
+                              onPressed: isLoading
+                                  ? null
+                                  : () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              const SignUpScreen(),
+                                        ),
+                                      );
+                                    },
+                              child: const Text(
+                                "Don't have an account? Create one",
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Center(
+                    child: Text(
+                      'Batik Air Digital Innovation  •  v1.0.0',
+                      style: const TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
