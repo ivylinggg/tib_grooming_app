@@ -18,6 +18,29 @@ class RememberedCredentials {
   });
 }
 
+String describeAuthError(FirebaseAuthException e) {
+  switch (e.code) {
+    case 'invalid-credential':
+    case 'wrong-password':
+    case 'user-not-found':
+      return 'Invalid email or password.';
+    case 'email-already-in-use':
+      return 'This email is already registered.';
+    case 'invalid-email':
+      return 'Please enter a valid email address.';
+    case 'weak-password':
+      return 'Password is too weak.';
+    case 'user-disabled':
+      return 'This account has been disabled.';
+    case 'too-many-requests':
+      return 'Too many attempts. Please try again later.';
+    case 'network-request-failed':
+      return 'Network error. Please check your connection.';
+    default:
+      return e.message ?? 'Authentication failed. Please try again.';
+  }
+}
+
 enum UpdateStaffErrorType { none, duplicateStaffId, writeFailed }
 
 class UpdateStaffResult {
