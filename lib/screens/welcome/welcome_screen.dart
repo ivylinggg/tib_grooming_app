@@ -11,91 +11,115 @@ class WelcomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 28, 20, 26),
           child: Column(
             children: [
-              const Spacer(),
-
               Container(
-                width: 140,
-                height: 140,
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(24, 30, 24, 30),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(35),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 25,
-                      offset: const Offset(0, 12),
+                  gradient: const LinearGradient(
+                    colors: [AppTheme.primary, AppTheme.primaryDark],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(28),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 78,
+                      height: 78,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.16),
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.flight_takeoff_rounded,
+                        size: 42,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    const Text(
+                      'BATIK AIR',
+                      style: TextStyle(
+                        color: AppTheme.accent,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 3,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Grooming Assessment',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 30,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'System',
+                      style: TextStyle(
+                        color: AppTheme.accent,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 13),
+                    const Text(
+                      'A professional workspace for grooming, assessment and training records.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                        height: 1.5,
+                      ),
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.flight_takeoff_rounded,
-                  size: 72,
-                  color: AppTheme.primary,
+              ),
+              const SizedBox(height: 24),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'What you can do',
+                  style: TextStyle(
+                    color: AppTheme.text,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-
-              const SizedBox(height: 40),
-
-              const Text(
-                "BATIK AIR",
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primary,
-                  letterSpacing: 3,
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              const Text(
-                "Grooming Assessment System",
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
-              ),
-
-              const SizedBox(height: 16),
-
-              const Text(
-                "Professional grooming assessment platform for cabin crew and trainers.",
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 15, color: Colors.grey, height: 1.6),
-              ),
-
-              const SizedBox(height: 45),
-
+              const SizedBox(height: 10),
               _FeatureTile(
-                icon: Icons.verified_user_outlined,
-                title: "Participant Management",
-                subtitle: "Register and manage cabin crew",
+                icon: Icons.groups_outlined,
+                title: 'Participant Management',
+                subtitle: 'Register and manage grooming participants.',
               ),
-
-              const SizedBox(height: 18),
-
+              const SizedBox(height: 10),
               _FeatureTile(
-                icon: Icons.psychology_alt_outlined,
-                title: "AI Grooming Assessment",
-                subtitle: "Evaluate grooming professionally",
+                icon: Icons.auto_awesome_outlined,
+                title: 'AI Grooming Assessment',
+                subtitle: 'Review appearance consistently with AI support.',
               ),
-
-              const SizedBox(height: 18),
-
+              const SizedBox(height: 10),
               _FeatureTile(
-                icon: Icons.bar_chart_outlined,
-                title: "Reports & Analytics",
-                subtitle: "Track grooming performance",
+                icon: Icons.folder_copy_outlined,
+                title: 'Reports & Training History',
+                subtitle: 'Keep training records and performance information together.',
               ),
-
-              const Spacer(),
-
+              const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
-                height: 58,
-                child: ElevatedButton(
+                child: FilledButton.icon(
                   onPressed: () {
                     Navigator.pushReplacement(
                       context,
@@ -104,14 +128,18 @@ class WelcomeScreen extends StatelessWidget {
                       ),
                     );
                   },
-                  child: const Text(
-                    "Get Started",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
+                  icon: const Icon(Icons.arrow_forward_rounded),
+                  label: const Text('Get Started'),
                 ),
               ),
-
-              const SizedBox(height: 20),
+              const SizedBox(height: 14),
+              const Text(
+                'Batik Air Digital Innovation  •  v1.0.0',
+                style: TextStyle(
+                  color: AppTheme.textMuted,
+                  fontSize: 10,
+                ),
+              ),
             ],
           ),
         ),
@@ -134,34 +162,24 @@ class _FeatureTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
-
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        border: Border.all(color: AppTheme.border),
       ),
-
       child: Row(
         children: [
           Container(
-            width: 52,
-            height: 52,
+            width: 46,
+            height: 46,
             decoration: BoxDecoration(
-              color: AppTheme.primary.withValues(alpha: 0.08),
+              color: AppTheme.primary.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, color: AppTheme.primary, size: 28),
+            child: Icon(icon, color: AppTheme.primary, size: 23),
           ),
-
-          const SizedBox(width: 18),
-
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,29 +187,22 @@ class _FeatureTile extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
+                    color: AppTheme.text,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-
                 const SizedBox(height: 4),
-
                 Text(
                   subtitle,
                   style: const TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey,
+                    color: AppTheme.textMuted,
+                    fontSize: 11,
                     height: 1.4,
                   ),
                 ),
               ],
             ),
-          ),
-
-          const Icon(
-            Icons.arrow_forward_ios_rounded,
-            size: 18,
-            color: Colors.grey,
           ),
         ],
       ),
