@@ -316,7 +316,7 @@ class _TrainerHistoryEditorScreenState
                       child: Image.network(
                         entry.value,
                         fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => const ColoredBox(
+                        errorBuilder: (errorContext, error, stackTrace) => const ColoredBox(
                           color: Color(0xFFEDEDED),
                           child: Center(
                             child: Icon(Icons.broken_image_outlined),
