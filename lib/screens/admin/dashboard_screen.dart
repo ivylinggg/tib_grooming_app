@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
+
 import '../../models/app_user.dart';
 import '../../models/overall_result.dart';
 import '../../services/auth_service.dart';
@@ -297,29 +299,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F6F1),
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: const Color(0xFF1F3D73),
-        foregroundColor: Colors.white,
-        centerTitle: true,
-        title: const Text(
-          "Admin Dashboard",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: const Text('Admin Dashboard'),
+        actions: [
         actions: [
           _NotificationBellAction(notificationService: _notificationService),
           IconButton(
-            tooltip: "Switch Portal",
-            onPressed: () {
-              _switchPortal();
-            },
+            tooltip: 'Switch Portal',
+            onPressed: _switchPortal,
             icon: const Icon(Icons.swap_horiz),
           ),
           IconButton(
+            tooltip: 'Sign Out',
             onPressed: _confirmLogout,
-            icon: const Icon(Icons.logout),
-            tooltip: "Logout",
+            icon: const Icon(Icons.logout_outlined),
           ),
         ],
       ),
@@ -336,7 +330,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 padding: const EdgeInsets.all(25),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1F3D73),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(22),
                 ),
                 child: const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -771,6 +765,67 @@ class _NotificationBellAction extends StatelessWidget {
   }
 }
 
+class _AdminUiMetric extends StatelessWidget {
+  const _AdminUiMetric({
+    required this.title,
+    required this.value,
+    required this.icon,
+    this.iconColor = AppTheme.primary,
+  });
+
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppTheme.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(height: 11),
+            Text(
+              value,
+              style: const TextStyle(
+                color: AppTheme.text,
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppTheme.textMuted,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _OverviewCard extends StatelessWidget {
   final String title;
   final String value;
@@ -791,7 +846,7 @@ class _OverviewCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8)],
+        border: Border.all(color: AppTheme.border),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
