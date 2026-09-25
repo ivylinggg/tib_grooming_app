@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
+import '../../core/theme/app_theme.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../api/assessment_api.dart';
 import '../../api/google_drive_api.dart';
@@ -397,7 +399,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F6F1),
+      backgroundColor: AppTheme.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.only(bottom: 40),
@@ -486,7 +488,7 @@ class _PhotoSourceSheet extends StatelessWidget {
               title: const Text(
                 "Cancel",
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.black54),
+                style: TextStyle(color: AppTheme.textMuted),
               ),
               onTap: () => Navigator.of(context).pop(),
             ),
