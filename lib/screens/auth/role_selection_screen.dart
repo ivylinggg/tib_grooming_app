@@ -197,40 +197,51 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     if (_checkingRole) {
       return const Scaffold(
         backgroundColor: AppTheme.background,
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
     if (_lookupFailed) {
       return Scaffold(
         backgroundColor: AppTheme.background,
-        body: SafeArea(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.error_outline,
-                    size: 48,
-                    color: Colors.red,
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    "Could not confirm your account. Please check your "
-                    "connection and try again.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.red),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _resolve,
-                    child: const Text("Retry"),
-                  ),
-                ],
+        appBar: AppBar(title: const Text('Account access')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(22),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.cloud_off_outlined,
+                      size: 44,
+                      color: AppTheme.error,
+                    ),
+                    const SizedBox(height: 14),
+                    const Text(
+                      'Could not confirm your account',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: AppTheme.text,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    const Text(
+                      'Check your connection and try again.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: AppTheme.textMuted),
+                    ),
+                    const SizedBox(height: 18),
+                    FilledButton(
+                      onPressed: _resolve,
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -241,8 +252,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        backgroundColor: AppTheme.primary,
-        foregroundColor: Colors.white,
         title: const Text('Select Your Role'),
         leading: IconButton(
           tooltip: 'Back to Sign In',
@@ -263,157 +272,73 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(20, 22, 20, 30),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 8),
-
               const Text(
-                "Select Your Role",
-                textAlign: TextAlign.center,
+                'Choose your workspace',
                 style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
+                  color: AppTheme.text,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-
-              const SizedBox(height: 8),
-
+              const SizedBox(height: 6),
               const Text(
-                "Choose how you will use the TiB AI Grooming Assessment "
-                "System.",
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.black54),
+                'Select the role you will use for this session.',
+                style: TextStyle(
+                  color: AppTheme.textMuted,
+                  fontSize: 13,
+                ),
               ),
-
-              const SizedBox(height: 28),
-
+              const SizedBox(height: 20),
               _RoleCard(
                 icon: Icons.admin_panel_settings_outlined,
-                title: "ADMIN",
-                description: "Administrator access",
+                title: 'ADMIN',
+                description: 'Participants, assessments, reports and system management',
                 selected: selection == _Selection.admin,
                 onTap: _selectAdmin,
               ),
-
-              const SizedBox(height: 16),
-
+              const SizedBox(height: 12),
               _RoleCard(
                 icon: Icons.badge_outlined,
-                title: "STAFF",
-                description: "Staff grooming assessment access",
+                title: 'STAFF',
+                description: 'Daily grooming check-in and appearance assessment',
                 selected: selection == _Selection.staff,
                 onTap: _selectStaff,
               ),
-
-              const SizedBox(height: 16),
-
+              const SizedBox(height: 12),
               _RoleCard(
                 icon: Icons.school_outlined,
-                title: "TRAINER",
-                description: "Manage training history and trainer reports",
+                title: 'TRAINER',
+                description: 'Training history, trainer reports and training photos',
                 selected: selection == _Selection.trainer,
                 onTap: _selectTrainer,
               ),
-
-              const SizedBox(height: 28),
-
-              ElevatedButton(
-                onPressed: isLoading || selection == _Selection.none
-                    ? null
-                    : _continue,
-                child: Text(
-                  isLoading ? "Saving..." : "Continue",
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: isLoading || selection == _Selection.none
+                      ? null
+                      : _continue,
+                  icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                  label: Text(isLoading ? 'Saving...' : 'Continue'),
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Your available portals depend on the role assigned to your account.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppTheme.textMuted,
+                  fontSize: 11,
+                  height: 1.4,
                 ),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RoleCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String description;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _RoleCard({
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppTheme.primary.withValues(alpha: 0.08)
-              : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: selected ? AppTheme.primary : Colors.black12,
-            width: selected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 52,
-              height: 52,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: selected ? AppTheme.primary : AppTheme.background,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(
-                icon,
-                color: selected ? Colors.white : AppTheme.primary,
-                size: 28,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    description,
-                    style: const TextStyle(
-                      color: Colors.black54,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              selected
-                  ? Icons.check_circle
-                  : Icons.radio_button_unchecked,
-              color: selected ? AppTheme.primary : Colors.black26,
-            ),
-          ],
         ),
       ),
     );
