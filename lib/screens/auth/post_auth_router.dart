@@ -130,6 +130,26 @@ Future<void> routeAfterAuth(BuildContext context) async {
       return;
 
     case PostAuthRoute.pending:
+      if (result.appUser != null && result.appUser!.roles.length > 1) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (_) => MultiRoleDashboardScreen(
+              appUser: result.appUser!,
+            ),
+          ),
+          (route) => false,
+        );
+        return;
+      }
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (_) => const RoleSelectionScreen(),
+        ),
+        (route) => false,
+      );
+      return;
+
     case PostAuthRoute.lookupFailed:
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
