@@ -70,8 +70,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         });
         return;
 
-      case PostAuthRoute.pending:
-        if (result.appUser != null && result.appUser!.roles.length > 1) {
+      case PostAuthRoute.multiRole:
+        if (result.appUser != null) {
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(
               builder: (_) => MultiRoleDashboardScreen(
@@ -82,6 +82,13 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
           );
           return;
         }
+        setState(() {
+          _lookupFailed = false;
+          _checkingRole = false;
+        });
+        return;
+
+      case PostAuthRoute.pending:
         setState(() {
           _lookupFailed = false;
           _checkingRole = false;
