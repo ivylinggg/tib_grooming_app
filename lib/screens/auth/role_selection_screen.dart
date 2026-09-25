@@ -232,6 +232,27 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
+        backgroundColor: AppTheme.primary,
+        foregroundColor: Colors.white,
+        title: const Text('Select Your Role'),
+        leading: IconButton(
+          tooltip: 'Back to Sign In',
+          onPressed: isLoading
+              ? null
+              : () async {
+                  await authService.signOut();
+                  if (!context.mounted) return;
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                      builder: (_) => const LoginScreen(),
+                    ),
+                    (route) => false,
+                  );
+                },
+          icon: const Icon(Icons.arrow_back),
+        ),
+      ),
+      appBar: AppBar(
         title: const Text("Select Your Role"),
         automaticallyImplyLeading: false,
       ),
