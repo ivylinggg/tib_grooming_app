@@ -1,308 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-
-import '../../core/theme/app_theme.dart';
-
-import '../../models/app_user.dart';
-import '../../models/overall_result.dart';
-import '../../services/auth_service.dart';
-import '../../services/firebase_service.dart';
-import '../../services/notification_service.dart';
-import '../auth/login_screen.dart';
-import '../auth/role_selection_screen.dart';
-import '../register/register_screen.dart';
-import 'assessment_detail_screen.dart';
-import 'assessment_management_screen.dart';
-import 'notifications_screen.dart';
-import 'participant_management_screen.dart';
-import 'participant_profile_screen.dart';
-import 'staff_management_screen.dart';
-import 'staff_profile_screen.dart';
-import 'statistics_screen.dart';
-import 'training_history_screen.dart';
-import '../trainer/trainer_dashboard_screen.dart';
-import '../auth/multi_role_dashboard_screen.dart';
-
-/// Admin's home screen. Only ever reached from RoleSelectionScreen's
-/// Admin choice, but that alone doesn't prove the *current* session is
-/// still Admin -- role can change between sessions, and this screen can
-/// be re-entered via the navigator stack -- so [initState] re-checks the
-/// actual `users/{uid}` role on every load rather than trusting how the
-/// screen was reached. See [_checkAdminAccess].
-///
-/// "Staff" and "Participant" are two distinct entities, not two labels
-/// for the same headcount:
-///  - Staff = a Firebase Auth login account with `role: "staff"` on its
-///    `users/{uid}` doc -- the person operating the app (Trainer
-///    Portal, Participant Check-In). Counted from the `users`
-///    collection.
-///  - Participant = a crew member being groomed/assessed, stored in
-///    `participants/{staffId}`, with no login of their own. Counted
-///    from the `participants` collection.
-/// The two counts can differ and both are shown separately below.
-class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
-
-  @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
-}
-
-class _DashboardScreenState extends State<DashboardScreen> {
-  final AuthService _authService = AuthService();
-  final FirebaseService _firebaseService = FirebaseService();
-  final NotificationService _notificationService = NotificationService();
-
-  bool _checkingAccess = true;
-
-  int totalStaff = 0;
-  int totalParticipants = 0;
-  int totalAssessments = 0;
-  int completedAssessments = 0;
-  int pendingAssessments = 0;
-  int failedAssessments = 0;
-
-  double averageScore = 0;
-
-  bool _loadingStats = true;
-  String? _statsError;
-
-  /// Kept separate from [_statsError]: this project has no
-  /// firestore.rules file checked into the repo, so whether Admin is
-  /// actually allowed to read the whole `users` collection depends on
-  /// live Firebase Console rules this app has no visibility into. If
-  /// that query comes back permission-denied, it shouldn't blank out
-  /// the participant/assessment stats that loaded fine.
-  String? _staffCountError;
-
-  List<Map<String, dynamic>> _recentParticipants = [];
-  List<Map<String, dynamic>> _recentAssessments = [];
-  List<AppUser> _recentStaff = [];
-  bool _loadingActivity = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkAdminAccess();
-  }
-
-  Future<void> _checkAdminAccess() async {
-    if (FirebaseAuth.instance.currentUser == null) {
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
-      return;
-    }
-
-    AppUser? appUser;
-    try {
-      appUser = await _authService.getCurrentAppUser();
-    } catch (e) {
-      debugPrint("DashboardScreen: role check failed - $e");
-    }
-
-    if (!mounted) return;
-
-    if (appUser == null || appUser.role != UserRole.admin) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
-      );
-      return;
-    }
-
-    setState(() {
-      _checkingAccess = false;
-    });
-
-    loadDashboard();
-  }
-
-  Future<void> loadDashboard() async {
-    setState(() {
-      _loadingStats = true;
-      _statsError = null;
-      _staffCountError = null;
-    });
-
-    try {
-      final staffSnapshot = await FirebaseFirestore.instance
-          .collection("users")
-          .where("role", isEqualTo: "staff")
-          .get();
-
-      totalStaff = staffSnapshot.docs.length;
-    } catch (e) {
-      debugPrint("DashboardScreen: staff count query failed - $e");
-      if (mounted) {
-        setState(() {
-          _staffCountError = "Could not load Staff count.";
-        });
-      }
-    }
-
-    try {
-      final participantSnapshot = await FirebaseFirestore.instance
-          .collection("participants")
-          .get();
-
-      final assessmentSnapshot = await FirebaseFirestore.instance
-          .collection("assessments")
-          .get();
-
-      totalParticipants = participantSnapshot.docs.length;
-      totalAssessments = assessmentSnapshot.docs.length;
-
-      int completed = 0;
-      for (final doc in participantSnapshot.docs) {
-        final count = (doc.data()["assessmentCount"] ?? 0) as int;
-        if (count > 0) completed++;
-      }
-      completedAssessments = completed;
-      pendingAssessments = totalParticipants - completed;
-
-      if (assessmentSnapshot.docs.isNotEmpty) {
-        int totalScore = 0;
-        int failed = 0;
-
-        for (final doc in assessmentSnapshot.docs) {
-          final data = doc.data();
-          final score = (data["totalScore"] ?? 0) as int;
-          totalScore += score;
-
-          if (score < kFailingScoreThreshold) failed++;
-        }
-
-        averageScore = totalScore / assessmentSnapshot.docs.length;
-        failedAssessments = failed;
-      } else {
-        averageScore = 0;
-        failedAssessments = 0;
-      }
-    } catch (e) {
-      debugPrint("DashboardScreen: loadDashboard failed - $e");
-      if (!mounted) return;
-      setState(() {
-        _statsError = "Could not load dashboard statistics.";
-      });
-    }
-
-    if (!mounted) return;
-
-    setState(() {
-      _loadingStats = false;
-    });
-
-    _loadRecentActivity();
-  }
-
-  Future<void> _loadRecentActivity() async {
-    setState(() {
-      _loadingActivity = true;
-    });
-
-    try {
-      final recentParticipants = await _firebaseService.getRecentParticipants(
-        limit: 5,
-      );
-      final recentAssessments = await _firebaseService.getRecentAssessments(
-        limit: 5,
-      );
-      final allStaff = await _authService.getAllStaff();
-      allStaff.sort((a, b) {
-        final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-        final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-        return bDate.compareTo(aDate);
-      });
-
-      if (!mounted) return;
-
-      setState(() {
-        _recentParticipants = recentParticipants;
-        _recentAssessments = recentAssessments;
-        _recentStaff = allStaff.take(5).toList();
-        _loadingActivity = false;
-      });
-    } catch (e) {
-      debugPrint("DashboardScreen: loadRecentActivity failed - $e");
-      if (!mounted) return;
-      setState(() {
-        _loadingActivity = false;
-      });
-    }
-  }
-
-  Future<void> _confirmLogout() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text("Logout"),
-        content: const Text("Are you sure you want to logout?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text("Logout"),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true || !mounted) return;
-
-    await _authService.signOut();
-
-    if (!mounted) return;
-
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-      (route) => false,
-    );
-  }
-
-  Color _resultColor(String result) {
-    switch (OverallResult.classify(result)) {
-      case OverallResult.excellent:
-        return Colors.green;
-      case OverallResult.good:
-        return Colors.blue;
-      case OverallResult.needsWork:
-        return Colors.orange;
-      case OverallResult.insufficient:
-        return Colors.red;
-    }
-  }
-
-  String _formatTimestamp(Timestamp? timestamp) {
-    if (timestamp == null) return "-";
-    final date = timestamp.toDate();
-    return "${date.day}/${date.month}/${date.year}";
-  }
-
-  String _formatDate(DateTime? date) {
-    if (date == null) return "Unknown";
-    return "${date.day}/${date.month}/${date.year}";
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_checkingAccess) {
-      return const Scaffold(
-        backgroundColor: Color(0xFFF8F6F1),
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
 
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text('Admin Dashboard'),
-        actions: [
         actions: [
           _NotificationBellAction(notificationService: _notificationService),
           IconButton(
@@ -329,8 +29,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(25),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1F3D73),
-                  borderRadius: BorderRadius.circular(22),
+                  gradient: const LinearGradient(
+                    colors: [AppTheme.primaryDark, AppTheme.primary],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(18),
                 ),
                 child: const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -371,17 +75,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     color: Colors.red.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: Colors.red.withValues(alpha: 0.3),
+                      color: AppTheme.error.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline, color: Colors.red),
+                      const Icon(Icons.error_outline, color: AppTheme.error),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           _statsError!,
-                          style: const TextStyle(color: Colors.red),
+                          style: const TextStyle(color: AppTheme.error),
                         ),
                       ),
                       TextButton(
@@ -400,14 +104,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     color: Colors.orange.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: Colors.orange.withValues(alpha: 0.3),
+                      color: AppTheme.warning.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
                     children: [
                       const Icon(
                         Icons.warning_amber_outlined,
-                        color: Colors.orange,
+                        color: AppTheme.warning,
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -495,7 +199,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   title: "Failed Grooming Assessments",
                   value: "$failedAssessments",
                   icon: Icons.warning_amber_rounded,
-                  iconColor: Colors.red,
+                  iconColor: AppTheme.error,
                 ),
               ],
               const SizedBox(height: 30),
@@ -836,7 +540,7 @@ class _OverviewCard extends StatelessWidget {
     required this.title,
     required this.value,
     required this.icon,
-    this.iconColor = const Color(0xFF1F3D73),
+    this.iconColor = AppTheme.primary,
   });
 
   @override
@@ -852,7 +556,15 @@ class _OverviewCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: iconColor, size: 28),
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: iconColor, size: 22),
+          ),
           const SizedBox(height: 12),
           Text(
             value,
@@ -863,7 +575,7 @@ class _OverviewCard extends StatelessWidget {
             title,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: Colors.black54, fontSize: 13),
+            style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
           ),
         ],
       ),
@@ -887,74 +599,14 @@ class _DashboardButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 2,
-      margin: const EdgeInsets.only(bottom: 15),
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: const Color(0xFF1F3D73),
+          backgroundColor: AppTheme.primary,
           child: Icon(icon, color: Colors.white),
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(subtitle),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 18),
-        onTap: onTap,
-      ),
-    );
-  }
-}
-
-class _RecentActivitySection extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final bool isEmpty;
-  final String emptyText;
-  final List<Widget> children;
-
-  const _RecentActivitySection({
-    required this.title,
-    required this.icon,
-    required this.isEmpty,
-    required this.emptyText,
-    required this.children,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: const Color(0xFF1F3D73), size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-            const Divider(height: 20),
-            if (isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text(
-                  emptyText,
-                  style: const TextStyle(color: Colors.grey),
-                ),
-              )
-            else
-              ...children,
-          ],
-        ),
-      ),
-    );
-  }
-}
+        trailing: const Icon(Icons.chevron_right_rounded, size: 21),
