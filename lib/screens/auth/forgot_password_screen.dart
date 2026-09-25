@@ -115,7 +115,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   "Check ${emailController.text.trim()} for a link to "
                   "reset your password.",
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.black54),
+                  style: const TextStyle(color: AppTheme.textMuted),
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
@@ -126,7 +126,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 const Text(
                   "Enter the email address associated with your account "
                   "and we'll send you a link to reset your password.",
-                  style: TextStyle(color: Colors.black54),
+                  style: TextStyle(color: AppTheme.textMuted),
                 ),
                 const SizedBox(height: 24),
 
