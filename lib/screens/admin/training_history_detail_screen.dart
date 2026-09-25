@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
+
 import '../../models/training_history.dart';
 
 class TrainingHistoryDetailScreen extends StatelessWidget {
@@ -18,7 +20,7 @@ class TrainingHistoryDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F6F1),
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text('Training Details'),
       ),
@@ -108,7 +110,7 @@ class TrainingHistoryDetailScreen extends StatelessWidget {
                   record.sourceFile!,
                   style: const TextStyle(
                     fontSize: 14,
-                    color: Colors.black54,
+                    color: AppTheme.textMuted,
                   ),
                 ),
               ),
@@ -131,7 +133,7 @@ class _HeaderCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: const Color(0xFF1F3D73),
+        color: AppTheme.primary,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -216,7 +218,7 @@ class _SectionCard extends StatelessWidget {
                 Icon(
                   icon,
                   size: 20,
-                  color: const Color(0xFF1F3D73),
+                  color: AppTheme.primary,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -260,7 +262,7 @@ class _InfoRow extends StatelessWidget {
             child: Text(
               label,
               style: const TextStyle(
-                color: Colors.black54,
+                color: AppTheme.textMuted,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -318,7 +320,7 @@ class _PhotoTile extends StatelessWidget {
         );
       },
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(18),
         child: AspectRatio(
           aspectRatio: 0.75,
           child: Image.network(
@@ -408,7 +410,7 @@ class _EmptyText extends StatelessWidget {
     return Text(
       text,
       style: const TextStyle(
-        color: Colors.black54,
+        color: AppTheme.textMuted,
         height: 1.5,
       ),
     );
