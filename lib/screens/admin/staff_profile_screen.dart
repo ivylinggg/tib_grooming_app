@@ -155,6 +155,8 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
         return "Admin";
       case UserRole.staff:
         return "Staff";
+      case UserRole.trainer:
+        return "Trainer";
       case UserRole.pending:
         return "Pending (no role assigned yet)";
     }
