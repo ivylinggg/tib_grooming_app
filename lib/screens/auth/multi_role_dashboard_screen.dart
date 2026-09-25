@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
+
 import '../../models/app_user.dart';
 import '../admin/dashboard_screen.dart';
 import '../register/register_screen.dart';
@@ -37,95 +39,54 @@ class MultiRoleDashboardScreen extends StatelessWidget {
     };
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F6F1),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1F3D73),
-        foregroundColor: Colors.white,
-        title: const Text('Select Portal'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Welcome, ${appUser.displayName}',
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(title: const Text('Select Portal')),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(22),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(colors: [AppTheme.primary, AppTheme.primaryDark], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 52, height: 52,
+                          decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(16)),
+                          child: const Icon(Icons.switch_account_outlined, color: Colors.white, size: 27),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            const Text('MULTIPLE ACCESS', style: TextStyle(color: AppTheme.accent, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.4)),
+                            const SizedBox(height: 5),
+                            Text('Welcome, ${appUser.displayName}', style: const TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w700)),
+                          ]),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  const Text('Choose your portal', style: TextStyle(color: AppTheme.text, fontSize: 22, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 5),
+                  const Text('Open the workspace you need without changing your account.', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+                  const SizedBox(height: 16),
+                  if (roles.contains(UserRole.admin)) _PortalButton(icon: Icons.admin_panel_settings_outlined, title: 'Admin Portal', subtitle: 'Manage staff, participants, assessments and reports.', onTap: () => _openAdmin(context)),
+                  if (roles.contains(UserRole.trainer)) _PortalButton(icon: Icons.school_outlined, title: 'Trainer Portal', subtitle: 'Manage training history, reviews and training photos.', onTap: () => _openTrainer(context)),
+                  if (roles.contains(UserRole.staff)) _PortalButton(icon: Icons.badge_outlined, title: 'Staff Portal', subtitle: 'Complete daily grooming check-in and assessment.', onTap: () => _openStaff(context)),
+                ],
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'This account has multiple roles. Choose the portal you want to open.',
-              style: TextStyle(color: Colors.black54),
-            ),
-            const SizedBox(height: 24),
-            if (roles.contains(UserRole.admin))
-              _PortalButton(
-                icon: Icons.admin_panel_settings_outlined,
-                title: 'Admin Portal',
-                subtitle: 'Manage staff, participants and assessments',
-                onTap: () => _openAdmin(context),
-              ),
-            if (roles.contains(UserRole.trainer))
-              _PortalButton(
-                icon: Icons.school_outlined,
-                title: 'Trainer Portal',
-                subtitle: 'Manage Training History and training photos',
-                onTap: () => _openTrainer(context),
-              ),
-            if (roles.contains(UserRole.staff))
-              _PortalButton(
-                icon: Icons.badge_outlined,
-                title: 'Staff Portal',
-                subtitle: 'Open staff registration and grooming workflow',
-                onTap: () => _openStaff(context),
-              ),
-          ],
+          ),
         ),
-      ),
-    );
-  }
-}
-
-class _PortalButton extends StatelessWidget {
-  const _PortalButton({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 14),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(18),
-        leading: CircleAvatar(
-          radius: 25,
-          backgroundColor: const Color(0xFF1F3D73),
-          child: Icon(icon, color: Colors.white),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 5),
-          child: Text(subtitle),
-        ),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: onTap,
       ),
     );
   }
