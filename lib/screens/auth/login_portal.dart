@@ -21,11 +21,11 @@ class LoginPortal extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(24, 30, 24, 30),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [AppTheme.primary, AppTheme.primaryDark],
+                    colors: [AppTheme.primaryDark, AppTheme.primary],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(28),
+                  borderRadius: BorderRadius.circular(18),
                 ),
                 child: Column(
                   children: [
@@ -34,7 +34,7 @@ class LoginPortal extends StatelessWidget {
                       height: 74,
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(22),
+                        borderRadius: BorderRadius.circular(18),
                         border: Border.all(
                           color: Colors.white.withValues(alpha: 0.18),
                         ),
@@ -61,7 +61,7 @@ class LoginPortal extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 30,
+                        fontSize: 27,
                         fontWeight: FontWeight.w700,
                         height: 1.15,
                       ),
@@ -72,7 +72,7 @@ class LoginPortal extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: AppTheme.accent,
-                        fontSize: 30,
+                        fontSize: 27,
                         fontWeight: FontWeight.w500,
                         height: 1.15,
                       ),
@@ -179,7 +179,7 @@ class _RoleCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppTheme.border),
       ),
       child: Column(
@@ -191,8 +191,8 @@ class _RoleCard extends StatelessWidget {
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(16),
+                  color: color.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(icon, color: color, size: 27),
               ),
@@ -227,8 +227,7 @@ class _RoleCard extends StatelessWidget {
               label: Text(buttonText),
               style: FilledButton.styleFrom(
                 backgroundColor: color,
-                foregroundColor:
-                    color == AppTheme.secondary ? AppTheme.primaryDark : Colors.white,
+                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(14)),
