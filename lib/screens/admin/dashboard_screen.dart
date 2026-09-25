@@ -20,6 +20,7 @@ import 'staff_profile_screen.dart';
 import 'statistics_screen.dart';
 import 'training_history_screen.dart';
 import '../trainer/trainer_dashboard_screen.dart';
+import '../auth/multi_role_dashboard_screen.dart';
 
 /// Admin's home screen. Only ever reached from RoleSelectionScreen's
 /// Admin choice, but that alone doesn't prove the *current* session is
@@ -342,13 +343,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
         actions: [
           _NotificationBellAction(notificationService: _notificationService),
           IconButton(
-            tooltip: "Switch to Trainer",
-            onPressed: () {
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (_) => const TrainerDashboardScreen(),
-                ),
-              );
+            tooltip: "Switch Portal",
+            onPressed: () async {
+              final appUser = await _authService.getCurrentAppUser();
+              if (!mounted) return;
+              if (appUser != null && appUser.roles.length > 1) {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (_) => MultiRoleDashboardScreen(appUser: appUser),
+                  ),
+                );
+              } else {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (_) => const TrainerDashboardScreen(),
+                  ),
+                );
+              }
             },
             icon: const Icon(Icons.swap_horiz),
           ),
