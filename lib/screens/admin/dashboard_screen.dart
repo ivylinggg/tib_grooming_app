@@ -513,7 +513,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     context,
                     MaterialPageRoute(builder: (_) => const RegisterScreen()),
                   );
-                  if (!mounted) return;
+                  if (!context.mounted) return;
                   loadDashboard();
                 },
               ),
@@ -528,7 +528,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       builder: (_) => const StaffManagementScreen(),
                     ),
                   );
-                  if (!mounted) return;
+                  if (!context.mounted) return;
                   loadDashboard();
                 },
               ),
@@ -543,7 +543,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       builder: (_) => const ParticipantManagementScreen(),
                     ),
                   );
-                  if (!mounted) return;
+                  if (!context.mounted) return;
                   loadDashboard();
                 },
               ),
@@ -558,7 +558,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       builder: (_) => const AssessmentManagementScreen(),
                     ),
                   );
-                  if (!mounted) return;
+                  if (!context.mounted) return;
                   loadDashboard();
                 },
               ),
