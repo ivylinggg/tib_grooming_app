@@ -9,6 +9,7 @@ class AppUser {
   final String lastName;
   final String? staffId;
   final UserRole role;
+  final List<UserRole> roles;
   final DateTime? createdAt;
 
   const AppUser({
@@ -18,8 +19,18 @@ class AppUser {
     this.lastName = '',
     this.staffId,
     required this.role,
+    this.roles = const [],
     this.createdAt,
   });
+
+  bool hasRole(UserRole value) {
+    if (roles.contains(value)) return true;
+    return role == value;
+  }
+
+  bool get isAdmin => hasRole(UserRole.admin);
+  bool get isTrainer => hasRole(UserRole.trainer);
+  bool get isStaff => hasRole(UserRole.staff);
 
   String get displayName {
     final name = '$firstName $lastName'.trim();
@@ -32,7 +43,29 @@ class AppUser {
     required Map<String, dynamic> data,
   }) {
     final roleString = data['role']?.toString().toLowerCase();
-    final rawCreatedAt = data['createdAt'];
+    final rawRoles = data['roles'];
+    final parsedRoles = <UserRole>[];
+
+    if (rawRoles is Iterable) {
+      for (final value in rawRoles) {
+        final parsed = _parseRole(value?.toString().toLowerCase());
+        if (parsed != UserRole.pending && !parsedRoles.contains(parsed)) {
+          parsedRoles.add(parsed);
+        }
+      }
+    }
+
+    final legacyRole = _parseRole(roleString);
+
+    if (parsedRoles.isEmpty && legacyRole != UserRole.pending) {
+      parsedRoles.add(legacyRole);
+    }
+
+    final primaryRole = parsedRoles.contains(legacyRole)
+        ? legacyRole
+        : parsedRoles.isNotEmpty
+            ? parsedRoles.first
+            : legacyRole;
 
     return AppUser(
       uid: uid,
@@ -40,8 +73,13 @@ class AppUser {
       firstName: data['firstName']?.toString() ?? '',
       lastName: data['lastName']?.toString() ?? '',
       staffId: data['staffId']?.toString(),
-      role: _parseRole(roleString),
-      createdAt: rawCreatedAt is Timestamp ? rawCreatedAt.toDate() : null,
+      role: primaryRole,
+      roles: parsedRoles,
+      createdAt: rawRoles == null && data['createdAt'] is Timestamp
+          ? (data['createdAt'] as Timestamp).toDate()
+          : data['createdAt'] is Timestamp
+              ? (data['createdAt'] as Timestamp).toDate()
+              : null,
     );
   }
 
