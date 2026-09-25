@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
+
 import '../../models/training_history.dart';
 import '../../services/training_history_service.dart';
 import 'trainer_history_editor_screen.dart';
@@ -224,11 +226,11 @@ class _TrainerTrainingHistoryScreenState
         fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Colors.black87),
+          borderSide: const BorderSide(color: AppTheme.text),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Colors.black87),
+          borderSide: const BorderSide(color: AppTheme.text),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -284,7 +286,7 @@ class _TrainerTrainingHistoryScreenState
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1F3D73).withValues(alpha: 0.10),
+                  color: AppTheme.primary.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(
@@ -311,7 +313,7 @@ class _TrainerTrainingHistoryScreenState
                     Text(
                       date,
                       style: const TextStyle(
-                        color: Colors.black54,
+                        color: AppTheme.textMuted,
                         fontSize: 14,
                       ),
                     ),
@@ -344,7 +346,7 @@ class _TrainerTrainingHistoryScreenState
               const SizedBox(width: 8),
               const Icon(
                 Icons.chevron_right,
-                color: Colors.black45,
+                color: AppTheme.textMuted,
                 size: 28,
               ),
             ],
@@ -360,9 +362,9 @@ class _TrainerTrainingHistoryScreenState
     final months = _groupByMonth(reports);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F6F1),
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1F3D73),
+        backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
         centerTitle: true,
         title: const Text(
@@ -387,7 +389,7 @@ class _TrainerTrainingHistoryScreenState
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-            color: const Color(0xFF1F3D73),
+            color: AppTheme.primary,
             child: _buildSearchField(),
           ),
           Expanded(
@@ -400,20 +402,20 @@ class _TrainerTrainingHistoryScreenState
                           Container(
                             padding: const EdgeInsets.all(18),
                             decoration: BoxDecoration(
-                              color: Colors.red.withValues(alpha: 0.08),
+                              color: AppTheme.error.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Row(
                               children: [
                                 const Icon(
                                   Icons.error_outline,
-                                  color: Colors.red,
+                                  color: AppTheme.error,
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
                                     _error!,
-                                    style: const TextStyle(color: Colors.red),
+                                    style: const TextStyle(color: AppTheme.error),
                                   ),
                                 ),
                                 TextButton(
@@ -452,7 +454,7 @@ class _TrainerTrainingHistoryScreenState
                                   const Text(
                                     'Training reports will appear here by month.',
                                     textAlign: TextAlign.center,
-                                    style: TextStyle(color: Colors.black54),
+                                    style: TextStyle(color: AppTheme.textMuted),
                                   ),
                                 ],
                               ),
@@ -520,7 +522,7 @@ class _InfoChip extends StatelessWidget {
         vertical: 6,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F5FA),
+        color: AppTheme.mutedSurface,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -529,14 +531,14 @@ class _InfoChip extends StatelessWidget {
           Icon(
             icon,
             size: 15,
-            color: const Color(0xFF1F3D73),
+            color: AppTheme.primary,
           ),
           const SizedBox(width: 5),
           Text(
             label,
             style: const TextStyle(
               fontSize: 12,
-              color: Colors.black87,
+              color: AppTheme.text,
             ),
           ),
         ],
@@ -579,7 +581,7 @@ class _TrainerTrainingReportDetailScreen extends StatelessWidget {
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppTheme.error,
               foregroundColor: Colors.white,
             ),
             child: const Text('Delete'),
@@ -597,7 +599,7 @@ class _TrainerTrainingReportDetailScreen extends StatelessWidget {
     } on TrainingHistoryException catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+        SnackBar(content: Text(e.message), backgroundColor: AppTheme.error),
       );
     }
   }
@@ -605,9 +607,9 @@ class _TrainerTrainingReportDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F6F1),
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1F3D73),
+        backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
         title: const Text(
           'Training Report',
@@ -627,7 +629,7 @@ class _TrainerTrainingReportDetailScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             '${records.length} participants',
-            style: const TextStyle(color: Colors.black54),
+            style: const TextStyle(color: AppTheme.textMuted),
           ),
           const SizedBox(height: 18),
           ...records.map(
@@ -643,7 +645,7 @@ class _TrainerTrainingReportDetailScreen extends StatelessWidget {
                 ),
                 leading: CircleAvatar(
                   backgroundColor:
-                      const Color(0xFF1F3D73).withValues(alpha: 0.10),
+                      AppTheme.primary.withValues(alpha: 0.10),
                   child: const Icon(
                     Icons.person_outline,
                     color: Color(0xFF1F3D73),
@@ -679,11 +681,11 @@ class _TrainerTrainingReportDetailScreen extends StatelessWidget {
                         contentPadding: EdgeInsets.zero,
                         leading: Icon(
                           Icons.delete_outline,
-                          color: Colors.red,
+                          color: AppTheme.error,
                         ),
                         title: Text(
                           'Delete',
-                          style: TextStyle(color: Colors.red),
+                          style: TextStyle(color: AppTheme.error),
                         ),
                       ),
                     ),
