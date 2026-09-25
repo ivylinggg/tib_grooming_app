@@ -346,7 +346,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             tooltip: "Switch Portal",
             onPressed: () async {
               final appUser = await _authService.getCurrentAppUser();
-              if (!context.mounted) return;
+              if (!mounted) return;
               if (appUser != null && appUser.roles.length > 1) {
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
