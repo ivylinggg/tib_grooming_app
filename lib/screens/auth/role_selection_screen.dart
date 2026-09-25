@@ -63,6 +63,15 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         );
         return;
 
+      case PostAuthRoute.trainer:
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (_) => const TrainerDashboardScreen(),
+          ),
+          (route) => false,
+        );
+        return;
+
       case PostAuthRoute.lookupFailed:
         setState(() {
           _lookupFailed = true;
@@ -251,10 +260,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 },
           icon: const Icon(Icons.arrow_back),
         ),
-      ),
-      appBar: AppBar(
-        title: const Text("Select Your Role"),
-        automaticallyImplyLeading: false,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
