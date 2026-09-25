@@ -84,50 +84,45 @@ class AuthService {
 
   Future<AppUser> selectAdminRole() async {
     final user = _requireCurrentUser();
-
-    await _guardRoleChange(user.uid, 'admin');
-
-    await _firestore.collection('users').doc(user.uid).update({
-      'role': 'admin',
-    });
-
+    await _setSingleRoleIfAllowed(user.uid, 'admin');
     return (await _loadAppUser(user))!;
   }
 
   Future<AppUser> selectStaffRole() async {
     final user = _requireCurrentUser();
-
-    await _guardRoleChange(user.uid, 'staff');
-
-    await _firestore.collection('users').doc(user.uid).update({
-      'role': 'staff',
-    });
-
+    await _setSingleRoleIfAllowed(user.uid, 'staff');
     return (await _loadAppUser(user))!;
   }
 
   Future<AppUser> selectTrainerRole() async {
     final user = _requireCurrentUser();
-
-    await _guardRoleChange(user.uid, 'trainer');
-
-    await _firestore.collection('users').doc(user.uid).update({
-      'role': 'trainer',
-    });
-
+    await _setSingleRoleIfAllowed(user.uid, 'trainer');
     return (await _loadAppUser(user))!;
   }
 
-  Future<void> _guardRoleChange(
+  Future<void> _setSingleRoleIfAllowed(
     String uid,
     String targetRole,
   ) async {
-    final doc = await _firestore
-        .collection('users')
-        .doc(uid)
-        .get(const GetOptions(source: Source.server));
+    final doc = await _firestore.collection('users').doc(uid).get(
+          const GetOptions(source: Source.server),
+        );
 
-    final currentRole = doc.data()?['role']?.toString();
+    final data = doc.data() ?? <String, dynamic>{};
+    final currentRole = data['role']?.toString();
+    final rawRoles = data['roles'];
+    final currentRoles = rawRoles is Iterable
+        ? rawRoles.map((value) => value.toString().toLowerCase()).toSet()
+        : <String>{};
+
+    if (currentRoles.isNotEmpty) {
+      if (currentRoles.contains(targetRole)) return;
+
+      throw StateError(
+        'This account already has one or more roles assigned. '
+        'Ask an Admin to change roles via Edit Staff.',
+      );
+    }
 
     if (currentRole != null &&
         currentRole != 'pending' &&
@@ -137,11 +132,39 @@ class AuthService {
         'changed here. Ask an Admin to change it via Edit Staff instead.',
       );
     }
+
+    await _firestore.collection('users').doc(uid).update({
+      'role': targetRole,
+      'roles': [targetRole],
+    });
+  }
+
+  Future<void> setUserRoles({
+    required String uid,
+    required List<UserRole> roles,
+  }) async {
+    if (roles.isEmpty) {
+      throw StateError('At least one role is required.');
+    }
+
+    final roleStrings = roles
+        .where((role) => role != UserRole.pending)
+        .map(_roleToString)
+        .toSet()
+        .toList();
+
+    if (roleStrings.isEmpty) {
+      throw StateError('At least one valid role is required.');
+    }
+
+    await _firestore.collection('users').doc(uid).update({
+      'role': roleStrings.first,
+      'roles': roleStrings,
+    });
   }
 
   Future<void> linkCurrentStaffToParticipant(String staffId) async {
     final user = _auth.currentUser;
-
     if (user == null) return;
     if (staffId.trim().isEmpty) return;
 
@@ -154,9 +177,7 @@ class AuthService {
     final user = _auth.currentUser;
 
     if (user == null) {
-      throw StateError(
-        'No signed-in user to assign a role to.',
-      );
+      throw StateError('No signed-in user to assign a role to.');
     }
 
     return user;
@@ -176,15 +197,12 @@ class AuthService {
 
   Future<AppUser?> getCurrentAppUser() async {
     final user = _auth.currentUser;
-
     if (user == null) return null;
-
     return _loadOrCreateAppUser(user);
   }
 
   Future<AppUser> _loadOrCreateAppUser(User user) async {
     final appUser = await _loadAppUser(user);
-
     if (appUser != null) return appUser;
 
     await _firestore.collection('users').doc(user.uid).set({
@@ -198,9 +216,7 @@ class AuthService {
     return (await _loadAppUser(user))!;
   }
 
-  static final RegExp _obsoleteStaffIdPattern = RegExp(
-    r'^STF\d+$',
-  );
+  static final RegExp _obsoleteStaffIdPattern = RegExp(r'^STF\d+$');
 
   Future<String?> _sanitizeStaffId(
     String uid,
@@ -215,9 +231,7 @@ class AuthService {
       await _firestore.collection('users').doc(uid).update({
         'staffId': FieldValue.delete(),
       });
-    } catch (_) {
-      // Non-fatal cleanup.
-    }
+    } catch (_) {}
 
     return null;
   }
@@ -230,9 +244,7 @@ class AuthService {
 
     if (!doc.exists) return null;
 
-    final data = Map<String, dynamic>.from(
-      doc.data()!,
-    );
+    final data = Map<String, dynamic>.from(doc.data()!);
 
     data['staffId'] = await _sanitizeStaffId(
       user.uid,
@@ -255,9 +267,7 @@ class AuthService {
     final results = <AppUser>[];
 
     for (final doc in snapshot.docs) {
-      final data = Map<String, dynamic>.from(
-        doc.data(),
-      );
+      final data = Map<String, dynamic>.from(doc.data());
 
       data['staffId'] = await _sanitizeStaffId(
         doc.id,
@@ -277,16 +287,10 @@ class AuthService {
   }
 
   Future<AppUser?> getStaffByUid(String uid) async {
-    final doc = await _firestore
-        .collection('users')
-        .doc(uid)
-        .get();
-
+    final doc = await _firestore.collection('users').doc(uid).get();
     if (!doc.exists) return null;
 
-    final data = Map<String, dynamic>.from(
-      doc.data()!,
-    );
+    final data = Map<String, dynamic>.from(doc.data()!);
 
     data['staffId'] = await _sanitizeStaffId(
       uid,
@@ -313,10 +317,7 @@ class AuthService {
       if (trimmedStaffId.isNotEmpty) {
         final duplicateCheck = await _firestore
             .collection('users')
-            .where(
-              'staffId',
-              isEqualTo: trimmedStaffId,
-            )
+            .where('staffId', isEqualTo: trimmedStaffId)
             .get();
 
         final isDuplicate =
@@ -330,9 +331,9 @@ class AuthService {
       await _firestore.collection('users').doc(uid).update({
         'firstName': firstName.trim(),
         'lastName': lastName.trim(),
-        'staffId':
-            trimmedStaffId.isEmpty ? null : trimmedStaffId,
+        'staffId': trimmedStaffId.isEmpty ? null : trimmedStaffId,
         'role': _roleToString(role),
+        'roles': [_roleToString(role)],
       });
 
       return UpdateStaffResult.success();
@@ -355,9 +356,7 @@ class AuthService {
   }
 
   Future<void> sendPasswordResetEmail(String email) {
-    return _auth.sendPasswordResetEmail(
-      email: email,
-    );
+    return _auth.sendPasswordResetEmail(email: email);
   }
 
   Future<void> signOut() => _auth.signOut();
@@ -368,10 +367,7 @@ class AuthService {
   }) async {
     final prefs = await SharedPreferences.getInstance();
 
-    await prefs.setString(
-      _rememberedEmailKey,
-      email,
-    );
+    await prefs.setString(_rememberedEmailKey, email);
 
     await const FlutterSecureStorage().write(
       key: _rememberedPasswordKey,
@@ -382,17 +378,11 @@ class AuthService {
   Future<RememberedCredentials?> getRememberedCredentials() async {
     final prefs = await SharedPreferences.getInstance();
 
-    final email = prefs.getString(
-      _rememberedEmailKey,
-    );
+    final email = prefs.getString(_rememberedEmailKey);
+    final password =
+        await const FlutterSecureStorage().read(key: _rememberedPasswordKey);
 
-    final password = await const FlutterSecureStorage().read(
-      key: _rememberedPasswordKey,
-    );
-
-    if (email == null || password == null) {
-      return null;
-    }
+    if (email == null || password == null) return null;
 
     return RememberedCredentials(
       email: email,
@@ -407,41 +397,5 @@ class AuthService {
     await const FlutterSecureStorage().delete(
       key: _rememberedPasswordKey,
     );
-  }
-}
-
-String describeAuthError(FirebaseAuthException e) {
-  if ((e.message ?? '').contains(
-    'CONFIGURATION_NOT_FOUND',
-  )) {
-    return 'Sign-in is not enabled for this app yet. '
-        'Please contact the administrator.';
-  }
-
-  switch (e.code) {
-    case 'invalid-email':
-      return 'That email address is not valid.';
-    case 'user-disabled':
-      return 'This account has been disabled.';
-    case 'user-not-found':
-    case 'wrong-password':
-    case 'invalid-credential':
-      return 'Incorrect email or password.';
-    case 'email-already-in-use':
-      return 'An account already exists for that email.';
-    case 'weak-password':
-      return 'That password is too weak.';
-    case 'operation-not-allowed':
-      return 'Email/password sign-in is not enabled for this app yet. '
-          'Please contact the administrator.';
-    case 'too-many-requests':
-      return 'Too many attempts. Please wait a moment and try again.';
-    case 'network-request-failed':
-      return 'Network error. Please check your connection and try again.';
-    case 'internal-error':
-      return 'Something went wrong. Please try again.';
-    default:
-      return e.message ??
-          'Authentication failed. Please try again.';
   }
 }
