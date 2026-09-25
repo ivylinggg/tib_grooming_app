@@ -57,17 +57,9 @@ class TrainerDashboardScreen extends StatelessWidget {
               final appUser = await AuthService().getCurrentAppUser();
               if (!context.mounted) return;
               if (appUser != null && appUser.roles.length > 1) {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (_) => MultiRoleDashboardScreen(appUser: appUser),
-                  ),
-                );
+                Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => MultiRoleDashboardScreen(appUser: appUser)));
               } else {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (_) => const DashboardScreen(),
-                  ),
-                );
+                Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const DashboardScreen()));
               }
             },
             icon: const Icon(Icons.swap_horiz),
@@ -81,112 +73,48 @@ class TrainerDashboardScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(22),
                 decoration: BoxDecoration(
-                  color: AppTheme.primary,
-                  borderRadius: BorderRadius.circular(22),
+                  gradient: const LinearGradient(colors: [AppTheme.primary, AppTheme.primaryDark], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                  borderRadius: BorderRadius.circular(24),
                 ),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.school_outlined,
-                      color: Colors.white,
-                      size: 34,
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      'Trainer Portal',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Manage training history, reports, trainer reviews and training photos.',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                        height: 1.5,
-                      ),
-                    ),
-                  ],
-                ),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    Container(width: 48, height: 48, decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(15)), child: const Icon(Icons.school_outlined, color: Colors.white, size: 26)),
+                    const SizedBox(width: 12),
+                    const Expanded(child: Text('TRAINING PORTAL', style: TextStyle(color: AppTheme.accent, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.5))),
+                  ]),
+                  const SizedBox(height: 18),
+                  const Text('Trainer Dashboard', style: TextStyle(color: Colors.white, fontSize: 27, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 7),
+                  const Text('Manage training history, reports, trainer reviews and training photos.', style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.5)),
+                ]),
               ),
-              const SizedBox(height: 20),
-              SizedBox(
-                height: 52,
-                child: ElevatedButton.icon(
-                  onPressed: () => _addTrainingReport(context),
-                  icon: const Icon(Icons.add),
-                  label: const Text(
-                    'Add Training Report',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Card(
-                margin: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
-                ),
+              const SizedBox(height: 18),
+              FilledButton.icon(onPressed: () => _addTrainingReport(context), icon: const Icon(Icons.add, size: 19), label: const Text('Add Training Report')),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(20), border: Border.all(color: AppTheme.border)),
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(20),
                   onTap: () => _openHistory(context),
                   child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            color: AppTheme.primary.withValues(alpha: 0.10),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: const Icon(
-                            Icons.folder_copy_outlined,
-                            color: AppTheme.primary,
-                            size: 30,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Training History',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(height: 5),
-                              Text(
-                                'Search, edit and manage historical training records.',
-                                style: TextStyle(
-                                  color: Colors.black54,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(
-                          Icons.arrow_forward_ios,
-                          size: 17,
-                        ),
-                      ],
-                    ),
+                    padding: const EdgeInsets.all(18),
+                    child: Row(children: [
+                      Container(width: 50, height: 50, decoration: BoxDecoration(color: AppTheme.primary.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(15)), child: const Icon(Icons.folder_copy_outlined, color: AppTheme.primary, size: 27)),
+                      const SizedBox(width: 14),
+                      const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('Training History', style: TextStyle(color: AppTheme.text, fontSize: 17, fontWeight: FontWeight.w700)),
+                        SizedBox(height: 5),
+                        Text('Search, edit and manage historical training records.', style: TextStyle(color: AppTheme.textMuted, fontSize: 12, height: 1.4)),
+                      ])),
+                      const Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted),
+                    ]),
                   ),
                 ),
               ),
