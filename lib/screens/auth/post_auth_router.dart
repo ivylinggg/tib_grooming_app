@@ -15,6 +15,7 @@ enum PostAuthRoute {
   staff,
   trainer,
   pending,
+  multiRole,
   lookupFailed,
 }
 
@@ -53,9 +54,9 @@ Future<PostAuthResult> resolvePostAuthRoute() async {
     );
   }
 
-  if (appUser.roles.length > 1) {
+  if (appUser.roles.length > 1 || (appUser.isAdmin && appUser.isTrainer)) {
     return PostAuthResult(
-      PostAuthRoute.pending,
+      PostAuthRoute.multiRole,
       appUser,
     );
   }
@@ -129,8 +130,8 @@ Future<void> routeAfterAuth(BuildContext context) async {
       );
       return;
 
-    case PostAuthRoute.pending:
-      if (result.appUser != null && result.appUser!.roles.length > 1) {
+    case PostAuthRoute.multiRole:
+      if (result.appUser != null) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
             builder: (_) => MultiRoleDashboardScreen(
@@ -141,7 +142,9 @@ Future<void> routeAfterAuth(BuildContext context) async {
         );
         return;
       }
+      return;
 
+    case PostAuthRoute.pending:
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
           builder: (_) => const RoleSelectionScreen(),
