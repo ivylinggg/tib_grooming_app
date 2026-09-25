@@ -204,57 +204,6 @@ class _TrainerTrainingHistoryScreenState extends State<TrainerTrainingHistoryScr
     if (saved == true) await _loadHistory();
   }
 
-  Future<void> _editRecord(TrainingHistory record) async {
-    final saved = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => TrainerHistoryEditorScreen(record: record),
-      ),
-    );
-    if (saved == true) await _loadHistory();
-  }
-
-  Future<void> _deleteRecord(TrainingHistory record) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Training Record?'),
-        content: Text(
-          'Delete the training record for ' + 
-          (record.participantName.isEmpty ? 'this participant' : record.participantName) + '?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-
-    try {
-      await _service.deleteRecord(record.id);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Training record deleted.')),
-      );
-      await _loadHistory();
-    } on TrainingHistoryException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message), backgroundColor: Colors.red),
-      );
-    }
-  }
-
   Widget _buildSearchField() {
     return TextField(
       controller: _searchController,
@@ -618,8 +567,7 @@ class _TrainerTrainingReportDetailScreen extends StatelessWidget {
       builder: (context) => AlertDialog(
         title: const Text('Delete Training Record?'),
         content: Text(
-          'Delete the training record for ' +
-          (record.participantName.isEmpty ? 'this participant' : record.participantName) + '?',
+          'Delete the training record for ${record.participantName.isEmpty ? 'this participant' : record.participantName}?',
         ),
         actions: [
           TextButton(
@@ -676,7 +624,7 @@ class _TrainerTrainingReportDetailScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            records.length.toString() + ' participants',
+            ${records.length} participants,
             style: const TextStyle(color: Colors.black54),
           ),
           const SizedBox(height: 18),
@@ -704,7 +652,7 @@ class _TrainerTrainingReportDetailScreen extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(
-                  record.trainingDate + '  •  ' + record.crewType,
+                  ${record.trainingDate}  •  ${record.crewType},
                 ),
                 trailing: PopupMenuButton<String>(
                   onSelected: (value) {
