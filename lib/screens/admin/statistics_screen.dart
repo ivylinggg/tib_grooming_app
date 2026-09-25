@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
+
 import '../../models/app_user.dart';
 import '../../models/overall_result.dart';
 import '../../services/auth_service.dart';
@@ -186,10 +188,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text("Statistics"),
-        backgroundColor: const Color(0xFF1F3D73),
+        backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
       ),
       body: _buildBody(),
@@ -302,7 +304,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             Card(
               elevation: 2,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(18),
@@ -333,7 +335,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                         value: completionRate,
                         minHeight: 12,
                         backgroundColor: Colors.grey.shade200,
-                        color: const Color(0xFF1F3D73),
+                        color: AppTheme.primary,
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -358,7 +360,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             Card(
               elevation: 2,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(18),
@@ -464,14 +466,14 @@ class _StatCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8)],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: const Color(0xFF1F3D73), size: 24),
+          Icon(icon, color: AppTheme.primary, size: 24),
           const SizedBox(height: 8),
           Text(
             value,
