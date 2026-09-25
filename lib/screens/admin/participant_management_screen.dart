@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
+
 import '../../api/assessment_api.dart';
 import '../../models/app_user.dart';
 import '../../models/captured_image.dart';
@@ -174,7 +176,7 @@ class _ParticipantManagementScreenState
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: AppTheme.background,
 
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -207,7 +209,7 @@ class _ParticipantManagementScreenState
             margin: const EdgeInsets.only(right: 20),
             child: CircleAvatar(
               radius: 22,
-              backgroundColor: const Color(0xFF1F3D73),
+              backgroundColor: AppTheme.primary,
               child: const Icon(Icons.people_alt_rounded, color: Colors.white),
             ),
           ),
@@ -229,7 +231,7 @@ class _ParticipantManagementScreenState
                 fillColor: Colors.white,
 
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(18),
                 ),
 
                 suffixIcon: _keyword.isEmpty
@@ -949,7 +951,7 @@ class _ParticipantManagementScreenState
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFF1F3D73),
+        backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.person_add),
         label: const Text("Register"),
