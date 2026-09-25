@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../services/auth_service.dart';
 import '../admin/dashboard_screen.dart';
 import '../trainer/trainer_dashboard_screen.dart';
+import 'multi_role_dashboard_screen.dart';
 import '../register/register_screen.dart';
 import 'login_screen.dart';
 
@@ -70,6 +71,17 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         return;
 
       case PostAuthRoute.pending:
+        if (result.appUser != null && result.appUser!.roles.length > 1) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(
+              builder: (_) => MultiRoleDashboardScreen(
+                appUser: result.appUser!,
+              ),
+            ),
+            (route) => false,
+          );
+          return;
+        }
         setState(() {
           _lookupFailed = false;
           _checkingRole = false;
