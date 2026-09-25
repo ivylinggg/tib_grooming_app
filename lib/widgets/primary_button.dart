@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/theme/app_theme.dart';
 
 class PrimaryButton extends StatelessWidget {
   final String text;
@@ -12,7 +13,7 @@ class PrimaryButton extends StatelessWidget {
     required this.text,
     this.onPressed,
     this.icon = Icons.add,
-    this.backgroundColor = const Color(0xFF1F3D73),
+    this.backgroundColor = AppTheme.primary,
     this.foregroundColor = Colors.white,
   });
 
@@ -22,22 +23,19 @@ class PrimaryButton extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: SizedBox(
         width: double.infinity,
-        height: 55,
-        child: ElevatedButton.icon(
+        child: FilledButton.icon(
           onPressed: onPressed,
-          icon: Icon(icon),
-          label: Text(
-            text,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          style: ElevatedButton.styleFrom(
+          icon: Icon(icon, size: 19),
+          label: Text(text),
+          style: FilledButton.styleFrom(
             backgroundColor: backgroundColor,
             foregroundColor: foregroundColor,
-            disabledBackgroundColor: Colors.grey.shade400,
-            disabledForegroundColor: Colors.white,
-            elevation: 3,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+            disabledBackgroundColor: AppTheme.border,
+            disabledForegroundColor: AppTheme.textMuted,
+            padding: const EdgeInsets.symmetric(vertical: 15),
+            elevation: 0,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(14)),
             ),
           ),
         ),
