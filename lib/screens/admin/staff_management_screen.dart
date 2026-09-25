@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
+
 import '../../models/app_user.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
@@ -147,10 +149,10 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text("Staff Management"),
-        backgroundColor: const Color(0xFF1F3D73),
+        backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
       ),
       body: Column(
@@ -220,13 +222,13 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.badge_outlined, size: 48, color: Colors.grey),
+              Icon(Icons.badge_outlined, size: 48, color: AppTheme.textMuted),
               SizedBox(height: 12),
               Text(
                 "No Staff accounts yet",
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.grey,
+                  color: AppTheme.textMuted,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -235,7 +237,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                 "A Staff account appears here the first time it signs in "
                 "and selects \"Staff\" on the Role Selection screen.",
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: Colors.grey),
+                style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
               ),
             ],
           ),
@@ -247,7 +249,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
       return const Center(
         child: Text(
           "No staff match your search",
-          style: TextStyle(fontSize: 15, color: Colors.grey),
+          style: TextStyle(fontSize: 15, color: AppTheme.textMuted),
         ),
       );
     }
@@ -264,12 +266,12 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
             margin: const EdgeInsets.only(bottom: 14),
             elevation: 2,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(18),
             ),
             child: ListTile(
               leading: CircleAvatar(
                 radius: 26,
-                backgroundColor: const Color(0xFF1F3D73),
+                backgroundColor: AppTheme.primary,
                 child: Text(
                   staff.displayName.isNotEmpty
                       ? staff.displayName[0].toUpperCase()
