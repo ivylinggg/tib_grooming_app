@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
+import '../auth/multi_role_dashboard_screen.dart';
 import '../admin/dashboard_screen.dart';
 import 'trainer_history_editor_screen.dart';
 import 'trainer_training_history_screen.dart';
@@ -51,13 +52,23 @@ class TrainerDashboardScreen extends StatelessWidget {
         title: const Text('Trainer Dashboard'),
         actions: [
           IconButton(
-            tooltip: 'Switch to Admin',
-            onPressed: () {
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (_) => const DashboardScreen(),
-                ),
-              );
+            tooltip: 'Switch Portal',
+            onPressed: () async {
+              final appUser = await AuthService().getCurrentAppUser();
+              if (!mounted) return;
+              if (appUser != null && appUser.roles.length > 1) {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (_) => MultiRoleDashboardScreen(appUser: appUser),
+                  ),
+                );
+              } else {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (_) => const DashboardScreen(),
+                  ),
+                );
+              }
             },
             icon: const Icon(Icons.swap_horiz),
           ),
