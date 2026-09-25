@@ -4,6 +4,7 @@ import '../../models/app_user.dart';
 import '../../screens/admin/dashboard_screen.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../screens/auth/role_selection_screen.dart';
+import 'multi_role_dashboard_screen.dart';
 import '../../screens/register/register_screen.dart';
 import '../../screens/trainer/trainer_dashboard_screen.dart';
 import '../../services/auth_service.dart';
@@ -49,6 +50,13 @@ Future<PostAuthResult> resolvePostAuthRoute() async {
     return const PostAuthResult(
       PostAuthRoute.lookupFailed,
       null,
+    );
+  }
+
+  if (appUser.roles.length > 1) {
+    return PostAuthResult(
+      PostAuthRoute.pending,
+      appUser,
     );
   }
 
