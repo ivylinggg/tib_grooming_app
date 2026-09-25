@@ -81,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Please enter email and password."),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
       return;
@@ -91,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Please enter a valid email address."),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
       return;
@@ -136,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(describeAuthError(e)),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
     } catch (e) {
@@ -149,7 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
       messenger.showSnackBar(
         const SnackBar(
           content: Text("Sign in failed."),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
     }
@@ -169,14 +169,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Container(
-                    padding: const EdgeInsets.fromLTRB(22, 24, 22, 22),
+                    padding: const EdgeInsets.fromLTRB(22, 24, 22, 24),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [AppTheme.primary, AppTheme.primaryDark],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(26),
+                      borderRadius: BorderRadius.circular(18),
                     ),
                     child: Column(
                       children: [
@@ -185,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           height: 68,
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.10),
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: Colors.white.withValues(alpha: 0.16),
                             ),
@@ -212,7 +212,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 27,
+                            fontSize: 26,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -227,16 +227,30 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  const Text(
+                  const SizedBox(height: 26),
+                  Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: AppTheme.secondary,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
                     'Welcome back',
                     style: TextStyle(
                       color: AppTheme.text,
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
                     ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 6),
                   const Text(
                     'Use your registered account to access the grooming workspace.',
                     style: TextStyle(
@@ -248,7 +262,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 20),
                   Card(
                     child: Padding(
-                      padding: const EdgeInsets.all(18),
+                      padding: const EdgeInsets.all(20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
