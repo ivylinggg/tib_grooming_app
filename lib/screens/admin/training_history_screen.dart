@@ -15,19 +15,20 @@ class _TrainingHistoryScreenState extends State<TrainingHistoryScreen> {
   final TrainingHistoryService _service = TrainingHistoryService();
   final TextEditingController _searchController = TextEditingController();
 
-  bool _loading = false;
+  bool _loading = true;
   String? _error;
-  List<TrainingHistory> results = [];
-  bool _hasSearched = false;
+  List<TrainingHistory> _allRecords = [];
+  List<TrainingHistory> _visibleRecords = [];
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+    _loadHistory();
   }
 
   void _onSearchChanged() {
-    if (mounted) setState(() {});
+    _applySearch();
   }
 
   @override
@@ -37,28 +38,19 @@ class _TrainingHistoryScreenState extends State<TrainingHistoryScreen> {
     super.dispose();
   }
 
-  Future<void> _search() async {
-    final query = _searchController.text.trim();
-    if (query.isEmpty) {
-      setState(() {
-        results = [];
-        _error = null;
-        _hasSearched = false;
-      });
-      return;
-    }
-
+  Future<void> _loadHistory() async {
     setState(() {
       _loading = true;
       _error = null;
-      _hasSearched = true;
     });
 
     try {
-      final found = await _service.searchByName(query);
+      final records = await _service.getAll();
       if (!mounted) return;
+
       setState(() {
-        results = found;
+        _allRecords = records;
+        _visibleRecords = records;
         _loading = false;
       });
     } on TrainingHistoryException catch (e) {
@@ -71,27 +63,144 @@ class _TrainingHistoryScreenState extends State<TrainingHistoryScreen> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = 'Unable to search training history.';
+        _error = 'Unable to load historical training records.';
+      });
+    }
+  }
+
+  void _applySearch() {
+    final query = _searchController.text.trim().toLowerCase();
+
+    final filtered = query.isEmpty
+        ? _allRecords
+        : _allRecords.where((record) {
+            return record.participantName.toLowerCase().contains(query) ||
+                record.trainingDate.toLowerCase().contains(query) ||
+                record.crewType.toLowerCase().contains(query) ||
+                record.trainer.toLowerCase().contains(query) ||
+                (record.sourceFile ?? '').toLowerCase().contains(query);
+          }).toList();
+
+    if (mounted) {
+      setState(() {
+        _visibleRecords = filtered;
       });
     }
   }
 
   void _clearSearch() {
     _searchController.clear();
-    setState(() {
-      results = [];
-      _error = null;
-      _hasSearched = false;
+  }
+
+  DateTime? _parseDate(String value) {
+    final text = value.trim();
+
+    final dash = RegExp(r'^(\\d{1,2})-(\\d{1,2})-(\\d{2,4})$').firstMatch(text);
+    if (dash != null) {
+      final day = int.tryParse(dash.group(1)!);
+      final month = int.tryParse(dash.group(2)!);
+      final rawYear = int.tryParse(dash.group(3)!);
+      if (day == null || month == null || rawYear == null) return null;
+      final year = rawYear < 100 ? 2000 + rawYear : rawYear;
+      return DateTime(year, month, day);
+    }
+
+    final slash = RegExp(r'^(\\d{1,2})/(\\d{1,2})/(\\d{2,4})$').firstMatch(text);
+    if (slash != null) {
+      final day = int.tryParse(slash.group(1)!);
+      final month = int.tryParse(slash.group(2)!);
+      final rawYear = int.tryParse(slash.group(3)!);
+      if (day == null || month == null || rawYear == null) return null;
+      final year = rawYear < 100 ? 2000 + rawYear : rawYear;
+      return DateTime(year, month, day);
+    }
+
+    return DateTime.tryParse(text);
+  }
+
+  String _monthLabel(DateTime date) {
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return '${months[date.month - 1]} ${date.year}'.toUpperCase();
+  }
+
+  List<_TrainingReportGroup> _buildGroups() {
+    final groups = <String, _TrainingReportGroup>{};
+
+    for (final record in _visibleRecords) {
+      final reportName = (record.sourceFile ?? '').trim().isEmpty
+          ? 'Training Report'
+          : record.sourceFile!.trim();
+
+      final date = _parseDate(record.trainingDate);
+
+      final key = '${reportName.toLowerCase()}|${record.trainingDate}';
+
+      groups.putIfAbsent(
+        key,
+        () => _TrainingReportGroup(
+          reportName: reportName,
+          date: date,
+          trainingDate: record.trainingDate,
+          crewType: record.crewType,
+        ),
+      );
+
+      groups[key]!.records.add(record);
+    }
+
+    final result = groups.values.toList();
+
+    result.sort((a, b) {
+      final aDate = a.date;
+      final bDate = b.date;
+      if (aDate != null && bDate != null) {
+        final comparison = bDate.compareTo(aDate);
+        if (comparison != 0) return comparison;
+      } else if (aDate != null) {
+        return -1;
+      } else if (bDate != null) {
+        return 1;
+      }
+
+      return b.reportName.compareTo(a.reportName);
     });
+
+    return result;
+  }
+
+  Map<String, List<_TrainingReportGroup>> _groupByMonth(
+    List<_TrainingReportGroup> reports,
+  ) {
+    final grouped = <String, List<_TrainingReportGroup>>{};
+
+    for (final report in reports) {
+      final date = report.date;
+      final key = date == null ? 'OTHER' : _monthLabel(date);
+      grouped.putIfAbsent(key, () => []).add(report);
+    }
+
+    return grouped;
   }
 
   Widget _buildSearchField() {
     return TextField(
       controller: _searchController,
       textInputAction: TextInputAction.search,
-      onSubmitted: (_) => _search(),
       decoration: InputDecoration(
-        hintText: 'Search Staff / Participant Name',
+        hintText: 'Search participant, date, crew or report',
         prefixIcon: const Icon(Icons.search),
         suffixIcon: _searchController.text.isEmpty
             ? null
@@ -104,149 +213,404 @@ class _TrainingHistoryScreenState extends State<TrainingHistoryScreen> {
         fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
+          borderSide: const BorderSide(color: Colors.black87),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Colors.black87),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(
+            color: Color(0xFF1F3D73),
+            width: 2,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildRecordCard(TrainingHistory record) {
-    final date = record.trainingDate.isEmpty ? '-' : record.trainingDate;
-    final crew = record.crewType.isEmpty ? 'Crew Type not recorded' : record.crewType;
-    final trainer = record.trainer.isEmpty ? 'Trainer not recorded' : record.trainer;
+  Widget _buildReportCard(_TrainingReportGroup report) {
+    final date = report.trainingDate.isEmpty
+        ? 'Date not recorded'
+        : report.trainingDate;
+
+    final crew = report.crewType.trim().isEmpty
+        ? 'Crew Type not recorded'
+        : report.crewType;
+
+    final participantCount = report.records.length;
+    final photoCount = report.records.fold<int>(
+      0,
+      (sum, record) => sum + record.photoUrls.length,
+    );
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: CircleAvatar(
-          backgroundColor: const Color(0xFF1F3D73).withValues(alpha: 0.10),
-          child: const Icon(Icons.history_edu_outlined, color: Color(0xFF1F3D73)),
-        ),
-        title: Text(record.participantName, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: Text('$date  •  $crew\n$trainer'),
-        ),
-        isThreeLine: true,
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+      margin: const EdgeInsets.only(bottom: 14),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
         onTap: () {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => TrainingHistoryDetailScreen(record: record),
+              builder: (_) => _TrainingReportDetailScreen(
+                reportName: report.reportName,
+                records: report.records,
+              ),
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 70),
-      child: Column(
-        children: [
-          const Icon(Icons.manage_search, size: 64, color: Colors.black26),
-          const SizedBox(height: 16),
-          Text(
-            _hasSearched ? 'No training history found' : 'Search a Staff / Participant Name',
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1F3D73).withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.description_outlined,
+                  color: Color(0xFF1F3D73),
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      report.reportName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      date,
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      crew,
+                      style: const TextStyle(
+                        color: Color(0xFF1F3D73),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        _InfoChip(
+                          icon: Icons.people_outline,
+                          label: '$participantCount participants',
+                        ),
+                        _InfoChip(
+                          icon: Icons.photo_library_outlined,
+                          label: '$photoCount photos',
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Icon(
+                Icons.chevron_right,
+                color: Colors.black45,
+                size: 28,
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            _hasSearched
-                ? 'Try another participant name.'
-                : 'View previous training dates, photos, trainer reviews and remarks.',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.black54),
-          ),
-        ],
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final reports = _buildGroups();
+    final months = _groupByMonth(reports);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F6F1),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1F3D73),
         foregroundColor: Colors.white,
-        title: const Text('Training History', style: TextStyle(fontWeight: FontWeight.bold)),
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
-              color: const Color(0xFF1F3D73),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Historical Training Records',
-                    style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text('Search by Staff / Participant Name', style: TextStyle(color: Colors.white70)),
-                  const SizedBox(height: 16),
-                  _buildSearchField(),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _loading || _searchController.text.trim().isEmpty ? null : _search,
-                      icon: const Icon(Icons.search),
-                      label: const Text('Search'),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(48),
-                        backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFF1F3D73),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(20),
-                children: [
-                  if (_error != null)
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Text(_error!, style: const TextStyle(color: Colors.red)),
-                    ),
-                  if (_loading)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 60),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  else if (results.isNotEmpty) ...[
-                    Text(
-                      '${results.length} matching ${results.length == 1 ? 'record' : 'records'}',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 12),
-                    ...results.map(_buildRecordCard),
-                  ]
-                  else
-                    _buildEmptyState(),
-                ],
-              ),
-            ),
-          ],
+        centerTitle: true,
+        title: const Text(
+          'Training History',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Refresh',
+            onPressed: _loading ? null : _loadHistory,
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            color: const Color(0xFF1F3D73),
+            child: _buildSearchField(),
+          ),
+          Expanded(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                    ? ListView(
+                        padding: const EdgeInsets.all(20),
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.error_outline,
+                                  color: Colors.red,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    _error!,
+                                    style: const TextStyle(color: Colors.red),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: _loadHistory,
+                                  child: const Text('Retry'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      )
+                    : reports.isEmpty
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(30),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.folder_open_outlined,
+                                    size: 64,
+                                    color: Colors.black26,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    _searchController.text.trim().isEmpty
+                                        ? 'No Training Reports'
+                                        : 'No Matching Training Reports',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Training reports will appear here by month.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(color: Colors.black54),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : ListView(
+                            padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+                            children: [
+                              for (final entry in months.entries) ...[
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    bottom: 12,
+                                    top: 4,
+                                  ),
+                                  child: Text(
+                                    entry.key,
+                                    style: const TextStyle(
+                                      fontSize: 19,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF1F3D73),
+                                    ),
+                                  ),
+                                ),
+                                ...entry.value.map(_buildReportCard),
+                                const SizedBox(height: 8),
+                              ],
+                            ],
+                          ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrainingReportGroup {
+  _TrainingReportGroup({
+    required this.reportName,
+    required this.date,
+    required this.trainingDate,
+    required this.crewType,
+  });
+
+  final String reportName;
+  final DateTime? date;
+  final String trainingDate;
+  final String crewType;
+  final List<TrainingHistory> records = [];
+}
+
+class _InfoChip extends StatelessWidget {
+  const _InfoChip({
+    required this.icon,
+    required this.label,
+  });
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 9,
+        vertical: 6,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F5FA),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 15,
+            color: const Color(0xFF1F3D73),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrainingReportDetailScreen extends StatelessWidget {
+  const _TrainingReportDetailScreen({
+    required this.reportName,
+    required this.records,
+  });
+
+  final String reportName;
+  final List<TrainingHistory> records;
+
+  @override
+  Widget build(BuildContext context) {
+    final sorted = [...records];
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F6F1),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1F3D73),
+        foregroundColor: Colors.white,
+        title: const Text(
+          'Training Report',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          Text(
+            reportName,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${sorted.length} participants',
+            style: const TextStyle(color: Colors.black54),
+          ),
+          const SizedBox(height: 18),
+          ...sorted.map(
+            (record) => Card(
+              margin: const EdgeInsets.only(bottom: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 6,
+                ),
+                leading: CircleAvatar(
+                  backgroundColor: const Color(0xFF1F3D73).withValues(alpha: 0.10),
+                  child: const Icon(
+                    Icons.person_outline,
+                    color: Color(0xFF1F3D73),
+                  ),
+                ),
+                title: Text(
+                  record.participantName,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  '${record.trainingDate}  •  ${record.crewType}',
+                ),
+                trailing: const Icon(
+                  Icons.chevron_right,
+                  color: Colors.black45,
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => TrainingHistoryDetailScreen(
+                        record: record,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
