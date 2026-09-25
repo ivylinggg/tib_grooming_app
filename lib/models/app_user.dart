@@ -42,30 +42,36 @@ class AppUser {
     required String email,
     required Map<String, dynamic> data,
   }) {
-    final roleString = data['role']?.toString().toLowerCase();
+    final rawRole = data['role'];
     final rawRoles = data['roles'];
     final parsedRoles = <UserRole>[];
 
-    if (rawRoles is Iterable) {
-      for (final value in rawRoles) {
-        final parsed = _parseRole(value?.toString().toLowerCase());
-        if (parsed != UserRole.pending && !parsedRoles.contains(parsed)) {
-          parsedRoles.add(parsed);
-        }
+    void addRole(Object? value) {
+      final parsed = _parseRole(value?.toString().toLowerCase());
+      if (parsed != UserRole.pending && !parsedRoles.contains(parsed)) {
+        parsedRoles.add(parsed);
       }
     }
 
-    final legacyRole = _parseRole(roleString);
-
-    if (parsedRoles.isEmpty && legacyRole != UserRole.pending) {
-      parsedRoles.add(legacyRole);
+    // Accept the Firebase format currently used by this account:
+    // role: ['admin', 'trainer']
+    if (rawRole is Iterable) {
+      for (final value in rawRole) {
+        addRole(value);
+      }
+    } else {
+      addRole(rawRole);
     }
 
-    final primaryRole = parsedRoles.contains(legacyRole)
-        ? legacyRole
-        : parsedRoles.isNotEmpty
-            ? parsedRoles.first
-            : legacyRole;
+    // Also accept the temporary/alternate `roles` array format.
+    if (rawRoles is Iterable) {
+      for (final value in rawRoles) {
+        addRole(value);
+      }
+    }
+
+    final primaryRole =
+        parsedRoles.isNotEmpty ? parsedRoles.first : UserRole.pending;
 
     return AppUser(
       uid: uid,
@@ -75,14 +81,11 @@ class AppUser {
       staffId: data['staffId']?.toString(),
       role: primaryRole,
       roles: parsedRoles,
-      createdAt: rawRoles == null && data['createdAt'] is Timestamp
+      createdAt: data['createdAt'] is Timestamp
           ? (data['createdAt'] as Timestamp).toDate()
-          : data['createdAt'] is Timestamp
-              ? (data['createdAt'] as Timestamp).toDate()
-              : null,
+          : null,
     );
   }
-
   static UserRole _parseRole(String? roleString) {
     switch (roleString) {
       case 'admin':
