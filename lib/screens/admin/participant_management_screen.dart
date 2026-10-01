@@ -170,7 +170,7 @@ class _ParticipantManagementScreenState
   Widget build(BuildContext context) {
     if (_checkingAccess) {
       return const Scaffold(
-        backgroundColor: Color(0xFFF5F7FA),
+        backgroundColor: AppTheme.background,
         body: Center(child: CircularProgressIndicator()),
       );
     }
@@ -191,7 +191,7 @@ class _ParticipantManagementScreenState
             Text(
               "Participant Dashboard",
               style: TextStyle(
-                color: Color(0xFF1F3D73),
+                color: AppTheme.primary,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
@@ -354,14 +354,14 @@ class _ParticipantManagementScreenState
                       "Assessed",
                       assessed.toString(),
                       Icons.analytics,
-                      Colors.green,
+                      AppTheme.success,
                     ),
 
                     card(
                       "Pending",
                       pending.toString(),
                       Icons.schedule,
-                      Colors.orange,
+                      AppTheme.warning,
                     ),
 
                     card("Today", today.toString(), Icons.today, Colors.purple),
@@ -556,7 +556,7 @@ class _ParticipantManagementScreenState
                                               maxLines: 1,
                                             ),
                                             style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.orange,
+                                              backgroundColor: AppTheme.warning,
                                               foregroundColor: Colors.white,
                                               padding:
                                                   const EdgeInsets.symmetric(
@@ -667,7 +667,7 @@ class _ParticipantManagementScreenState
                                                                               content: Text(
                                                                                 kFullBodyPhotoErrorMessage,
                                                                               ),
-                                                                              backgroundColor: Colors.red,
+                                                                              backgroundColor: AppTheme.error,
                                                                             ),
                                                                           );
                                                                         }
@@ -873,7 +873,7 @@ class _ParticipantManagementScreenState
                                               maxLines: 1,
                                             ),
                                             style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.green,
+                                              backgroundColor: AppTheme.success,
                                               foregroundColor: Colors.white,
                                               padding:
                                                   const EdgeInsets.symmetric(
@@ -917,7 +917,7 @@ class _ParticipantManagementScreenState
                                               maxLines: 1,
                                             ),
                                             style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.red,
+                                              backgroundColor: AppTheme.error,
                                               foregroundColor: Colors.white,
                                               padding:
                                                   const EdgeInsets.symmetric(
