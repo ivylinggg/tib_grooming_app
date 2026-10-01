@@ -333,7 +333,7 @@ class _PhotoTile extends StatelessWidget {
                 child: Icon(
                   Icons.broken_image_outlined,
                   size: 30,
-                  color: AppTheme.textMuted.withValues(alpha: 0.75),
+                  color: AppTheme.textMuted,
                 ),
               ),
             ),
