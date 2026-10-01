@@ -900,7 +900,7 @@ class _RecentActivitySection extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(
                   emptyText,
-                  style: const TextStyle(color: Colors.grey),
+                  style: const TextStyle(color: AppTheme.textMuted),
                 ),
               )
             else
