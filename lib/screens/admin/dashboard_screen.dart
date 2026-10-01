@@ -329,7 +329,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 padding: const EdgeInsets.all(25),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [AppTheme.primaryDark, AppTheme.secondary],
+                    colors: [AppTheme.primary, AppTheme.primary],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
