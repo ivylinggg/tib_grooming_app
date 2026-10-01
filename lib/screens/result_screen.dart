@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_theme.dart';
+
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -30,13 +32,29 @@ class ResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Assessment Result"), centerTitle: true),
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(
+        title: const Text("Assessment Result"),
+        centerTitle: true,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.verified, color: Colors.green, size: 80),
+            Container(
+              width: 82,
+              height: 82,
+              decoration: BoxDecoration(
+                color: AppTheme.accent.withValues(alpha: 0.16),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.verified_rounded,
+                color: AppTheme.primary,
+                size: 46,
+              ),
+            ),
 
             const SizedBox(height: 20),
 
@@ -73,7 +91,13 @@ class ResultScreen extends StatelessWidget {
 
             Card(
               color: resultColor.withValues(alpha: 0.08),
-              elevation: 2,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+                side: BorderSide(
+                  color: resultColor.withValues(alpha: 0.22),
+                ),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(18),
                 child: Column(
@@ -102,7 +126,11 @@ class ResultScreen extends StatelessWidget {
 
             const Text(
               "AI Summary",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 19,
+                color: AppTheme.text,
+              ),
             ),
 
             const SizedBox(height: 10),
@@ -118,7 +146,11 @@ class ResultScreen extends StatelessWidget {
 
             const Text(
               "Assessment Criteria",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 19,
+                color: AppTheme.text,
+              ),
             ),
 
             const SizedBox(height: 12),
@@ -164,7 +196,7 @@ class ResultScreen extends StatelessWidget {
               const SizedBox(height: 12),
             ],
 
-            ElevatedButton.icon(
+            FilledButton.icon(
               icon: const Icon(Icons.dashboard_outlined),
               label: const Text("Continue to Staff Dashboard"),
               onPressed: () async {
