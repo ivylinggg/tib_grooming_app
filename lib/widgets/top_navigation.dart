@@ -41,7 +41,6 @@ class TopNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = AppTheme.primary;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
