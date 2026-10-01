@@ -235,7 +235,7 @@ class _TrainerTrainingHistoryScreenState
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(
-            color: Color(0xFF1F3D73),
+            color: AppTheme.primary,
             width: 2,
           ),
         ),
@@ -291,7 +291,7 @@ class _TrainerTrainingHistoryScreenState
                 ),
                 child: const Icon(
                   Icons.description_outlined,
-                  color: Color(0xFF1F3D73),
+                  color: AppTheme.primary,
                   size: 28,
                 ),
               ),
@@ -321,7 +321,7 @@ class _TrainerTrainingHistoryScreenState
                     Text(
                       crew,
                       style: const TextStyle(
-                        color: Color(0xFF1F3D73),
+                        color: AppTheme.primary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -437,7 +437,7 @@ class _TrainerTrainingHistoryScreenState
                                   const Icon(
                                     Icons.folder_open_outlined,
                                     size: 64,
-                                    color: Colors.black26,
+                                    color: AppTheme.textMuted,
                                   ),
                                   const SizedBox(height: 16),
                                   Text(
@@ -474,7 +474,7 @@ class _TrainerTrainingHistoryScreenState
                                     style: const TextStyle(
                                       fontSize: 19,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF1F3D73),
+                                      color: AppTheme.primary,
                                     ),
                                   ),
                                 ),
@@ -648,7 +648,7 @@ class _TrainerTrainingReportDetailScreen extends StatelessWidget {
                       AppTheme.primary.withValues(alpha: 0.10),
                   child: const Icon(
                     Icons.person_outline,
-                    color: Color(0xFF1F3D73),
+                    color: AppTheme.primary,
                   ),
                 ),
                 title: Text(
