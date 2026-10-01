@@ -8,7 +8,9 @@ import 'core/routes/app_routes.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   runApp(const BatikAirApp());
 }
@@ -21,11 +23,7 @@ class BatikAirApp extends StatelessWidget {
     return MaterialApp(
       title: 'Batik Air Grooming Assessment',
       debugShowCheckedModeBanner: false,
-
-      // Global Theme
       theme: AppTheme.lightTheme,
-
-      // First Screen
       initialRoute: AppRoutes.splash,
       onGenerateRoute: AppRoutes.onGenerateRoute,
     );
