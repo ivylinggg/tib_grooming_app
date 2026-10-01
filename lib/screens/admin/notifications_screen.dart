@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
+
 import '../../models/admin_notification.dart';
 import '../../services/notification_service.dart';
 import 'assessment_detail_screen.dart';
@@ -67,10 +69,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final adminUid = _adminUid;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text("Notifications"),
-        backgroundColor: const Color(0xFF1F3D73),
+        backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
       ),
       body: StreamBuilder<List<AdminNotification>>(
@@ -116,7 +118,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   side: BorderSide(
                     color: isRead
                         ? Colors.grey.shade200
-                        : const Color(0xFF1F3D73).withValues(alpha: 0.3),
+                        : AppTheme.primary.withValues(alpha: 0.3),
                   ),
                 ),
                 child: ListTile(
