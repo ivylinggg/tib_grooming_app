@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
+import '../../core/theme/app_theme.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../config/hosting_config.dart';
@@ -495,10 +497,10 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text("Assessment Details"),
-        backgroundColor: const Color(0xFF1F3D73),
+        backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
         actions: [
           if (_isAdmin && _assessment != null)
@@ -661,7 +663,7 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
                 ),
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: const Color(0xFF1F3D73),
+                    backgroundColor: AppTheme.primary,
                     child: Text(
                       criterionScore,
                       style: const TextStyle(color: Colors.white),
@@ -738,7 +740,7 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
                 : const Icon(Icons.picture_as_pdf_outlined),
             label: Text(_exportingPdf ? "Generating PDF..." : "Export PDF"),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1F3D73),
+              backgroundColor: AppTheme.primary,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
