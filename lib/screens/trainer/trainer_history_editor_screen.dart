@@ -172,7 +172,7 @@ class _TrainerHistoryEditorScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Photo upload failed: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
     }
@@ -231,7 +231,7 @@ class _TrainerHistoryEditorScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.message),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
     } catch (_) {
@@ -244,7 +244,7 @@ class _TrainerHistoryEditorScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Could not save the training record.'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
     }
@@ -302,7 +302,7 @@ class _TrainerHistoryEditorScreenState
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: Text(
                   'No photos added yet.',
-                  style: TextStyle(color: Colors.black54),
+                  style: TextStyle(color: AppTheme.textMuted),
                 ),
               )
             else
@@ -317,7 +317,7 @@ class _TrainerHistoryEditorScreenState
                         entry.value,
                         fit: BoxFit.contain,
                         errorBuilder: (_, _, _) => const ColoredBox(
-                          color: Color(0xFFEDEDED),
+                          color: AppTheme.mutedSurface,
                           child: Center(
                             child: Icon(Icons.broken_image_outlined),
                           ),
