@@ -467,7 +467,7 @@ class _StatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: const [BoxShadow(color: AppTheme.border.withValues(alpha: 0.35), blurRadius: 8)],
+        boxShadow: [BoxShadow(color: AppTheme.border.withValues(alpha: 0.35), blurRadius: 8)],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
