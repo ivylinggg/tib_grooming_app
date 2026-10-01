@@ -121,13 +121,13 @@ class _ParticipantProfileScreenState extends State<ParticipantProfileScreen> {
   Color _resultColor(String result) {
     switch (OverallResult.classify(result)) {
       case OverallResult.excellent:
-        return Colors.green;
+        return AppTheme.success;
       case OverallResult.good:
-        return Colors.blue;
+        return AppTheme.primary;
       case OverallResult.needsWork:
-        return Colors.orange;
+        return AppTheme.warning;
       case OverallResult.insufficient:
-        return Colors.red;
+        return AppTheme.error;
     }
   }
 
@@ -202,7 +202,7 @@ class _ParticipantProfileScreenState extends State<ParticipantProfileScreen> {
               ? "Participant updated successfully."
               : "Could not save changes.",
         ),
-        backgroundColor: success ? Colors.green : Colors.red,
+        backgroundColor: success ? AppTheme.success : AppTheme.error,
       ),
     );
 
@@ -215,7 +215,7 @@ class _ParticipantProfileScreenState extends State<ParticipantProfileScreen> {
   Widget build(BuildContext context) {
     if (_checkingAccess) {
       return const Scaffold(
-        backgroundColor: Color(0xFFF5F7FB),
+        backgroundColor: AppTheme.background,
         body: Center(child: CircularProgressIndicator()),
       );
     }
@@ -273,7 +273,7 @@ class _ParticipantProfileScreenState extends State<ParticipantProfileScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
-              decoration: const BoxDecoration(color: Color(0xFF1F3D73)),
+              decoration: const BoxDecoration(color: AppTheme.primary),
               child: Column(
                 children: [
                   CircleAvatar(
@@ -286,7 +286,7 @@ class _ParticipantProfileScreenState extends State<ParticipantProfileScreen> {
                         ? const Icon(
                             Icons.person,
                             size: 40,
-                            color: Color(0xFF1F3D73),
+                            color: AppTheme.primary,
                           )
                         : null,
                   ),
@@ -421,17 +421,17 @@ class _ParticipantProfileScreenState extends State<ParticipantProfileScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.blueGrey.withValues(alpha: 0.06),
+                      color: AppTheme.primaryGrey.withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: Colors.blueGrey.withValues(alpha: 0.2),
+                        color: AppTheme.primaryGrey.withValues(alpha: 0.2),
                       ),
                     ),
                     child: Row(
                       children: [
                         const Icon(
                           Icons.badge_outlined,
-                          color: Colors.blueGrey,
+                          color: AppTheme.primaryGrey,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -441,7 +441,7 @@ class _ParticipantProfileScreenState extends State<ParticipantProfileScreen> {
                                       "${participant.createdByStaffId != null ? " (${participant.createdByStaffId})" : ""}"
                                 : "Registered by: Unknown / Not recorded",
                             style: const TextStyle(
-                              color: Colors.blueGrey,
+                              color: AppTheme.primaryGrey,
                               fontSize: 13,
                             ),
                           ),
