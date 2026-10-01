@@ -414,13 +414,13 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: AppTheme.primaryGrey.withValues(alpha: 0.06),
+            color: AppTheme.textMuted.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.primaryGrey.withValues(alpha: 0.2)),
+            border: Border.all(color: AppTheme.textMuted.withValues(alpha: 0.2)),
           ),
           child: const Row(
             children: [
-              Icon(Icons.info_outline, color: AppTheme.primaryGrey, size: 20),
+              Icon(Icons.info_outline, color: AppTheme.textMuted, size: 20),
               SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -428,7 +428,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                   "Staff-Participant tracking was added are listed here. "
                   "Earlier activity, if any, was not recorded and cannot "
                   "be reconstructed.",
-                  style: TextStyle(color: AppTheme.primaryGrey, fontSize: 12),
+                  style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
                 ),
               ),
             ],
