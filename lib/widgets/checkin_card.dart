@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import '../core/theme/app_theme.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../api/assessment_api.dart';
@@ -67,7 +69,7 @@ class _CheckInCardState extends State<CheckInCard> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Please enter Staff ID"),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.primary,
         ),
       );
       return;
@@ -92,7 +94,7 @@ class _CheckInCardState extends State<CheckInCard> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Participant not found"),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.primary,
         ),
       );
       return;
@@ -146,7 +148,7 @@ class _CheckInCardState extends State<CheckInCard> {
             "Camera permission is required to take today's photo. "
             "Please enable it in Settings.",
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.primary,
           action: SnackBarAction(
             label: "Open Settings",
             textColor: Colors.white,
@@ -162,7 +164,7 @@ class _CheckInCardState extends State<CheckInCard> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Camera permission is required to take today's photo."),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.primary,
         ),
       );
       return;
@@ -204,7 +206,7 @@ class _CheckInCardState extends State<CheckInCard> {
             content: Text(
               "Camera permission is required to take today's photo.",
             ),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.primary,
           ),
         );
         break;
@@ -216,7 +218,7 @@ class _CheckInCardState extends State<CheckInCard> {
               "Camera permission is required to take today's photo. "
               "Please enable it in Settings.",
             ),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.primary,
             action: SnackBarAction(
               label: "Open Settings",
               textColor: Colors.white,
@@ -251,7 +253,7 @@ class _CheckInCardState extends State<CheckInCard> {
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(content: Text(message), backgroundColor: AppTheme.primary),
     );
   }
 
@@ -297,7 +299,7 @@ class _CheckInCardState extends State<CheckInCard> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(kFullBodyPhotoErrorMessage),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.primary,
         ),
       );
     }
@@ -315,7 +317,7 @@ class _CheckInCardState extends State<CheckInCard> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3)),
+          BoxShadow(color: AppTheme.text12, blurRadius: 8, offset: Offset(0, 3)),
         ],
       ),
       child: Column(
@@ -326,7 +328,7 @@ class _CheckInCardState extends State<CheckInCard> {
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF162B56),
+              color: AppTheme.primary,
             ),
           ),
 
@@ -376,7 +378,7 @@ class _CheckInCardState extends State<CheckInCard> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1F3D73),
+                backgroundColor: const AppTheme.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -433,7 +435,7 @@ class _CheckInCardState extends State<CheckInCard> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text("Please find participant first"),
-                            backgroundColor: Colors.red,
+                            backgroundColor: AppTheme.primary,
                           ),
                         );
                         return;
@@ -443,7 +445,7 @@ class _CheckInCardState extends State<CheckInCard> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text("Please take today's photo"),
-                            backgroundColor: Colors.red,
+                            backgroundColor: AppTheme.primary,
                           ),
                         );
                         return;
@@ -453,7 +455,7 @@ class _CheckInCardState extends State<CheckInCard> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text("Reference photo not found"),
-                            backgroundColor: Colors.red,
+                            backgroundColor: AppTheme.primary,
                           ),
                         );
                         return;
@@ -496,7 +498,7 @@ class _CheckInCardState extends State<CheckInCard> {
                         messenger.showSnackBar(
                           const SnackBar(
                             content: Text(kFullBodyPhotoErrorMessage),
-                            backgroundColor: Colors.red,
+                            backgroundColor: AppTheme.primary,
                           ),
                         );
                         return;
@@ -518,7 +520,7 @@ class _CheckInCardState extends State<CheckInCard> {
                         messenger.showSnackBar(
                           const SnackBar(
                             content: Text("Analysis failed"),
-                            backgroundColor: Colors.red,
+                            backgroundColor: AppTheme.primary,
                           ),
                         );
                         return;
@@ -553,7 +555,7 @@ class _CheckInCardState extends State<CheckInCard> {
                               assessmentService.lastUploadError ??
                                   "Failed to upload today's photo.",
                             ),
-                            backgroundColor: Colors.red,
+                            backgroundColor: AppTheme.primary,
                           ),
                         );
                         return;
@@ -575,7 +577,7 @@ class _CheckInCardState extends State<CheckInCard> {
                         messenger.showSnackBar(
                           const SnackBar(
                             content: Text("Failed to save assessment."),
-                            backgroundColor: Colors.red,
+                            backgroundColor: AppTheme.primary,
                           ),
                         );
                         return;
