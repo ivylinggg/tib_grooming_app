@@ -200,7 +200,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const Text(
                           'BATIK AIR',
                           style: TextStyle(
-                            color: AppTheme.accent,
+                            color: Colors.white,
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 2.6,
