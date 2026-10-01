@@ -300,7 +300,7 @@ class _AssessmentManagementScreenState
                   return const Center(
                     child: Text(
                       "No assessment records yet",
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                      style: TextStyle(fontSize: 16, color: AppTheme.textMuted),
                     ),
                   );
                 }
@@ -311,7 +311,7 @@ class _AssessmentManagementScreenState
                   return const Center(
                     child: Text(
                       "No assessments match your search/filter",
-                      style: TextStyle(fontSize: 15, color: Colors.grey),
+                      style: TextStyle(fontSize: 15, color: AppTheme.textMuted),
                     ),
                   );
                 }
