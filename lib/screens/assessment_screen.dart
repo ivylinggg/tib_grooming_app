@@ -50,11 +50,20 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
         padding: const EdgeInsets.all(20),
         children: [
           Card(
-            elevation: 2,
             child: ListTile(
-              leading: const Icon(Icons.person),
-              title: Text(widget.participantName),
+              leading: const CircleAvatar(
+                backgroundColor: AppTheme.mutedSurface,
+                child: Icon(Icons.person, color: AppTheme.primary),
+              ),
+              title: Text(
+                widget.participantName,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
               subtitle: Text("Staff ID : ${widget.participantId}"),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
+              ),
             ),
           ),
 
@@ -151,28 +160,33 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
           ...widget.assessmentResult.criteria.map(
             (item) => Card(
               child: ListTile(
-                leading: const Icon(Icons.check_circle_outline),
-
-                title: Text(item.label),
-
+                leading: const CircleAvatar(
+                  backgroundColor: AppTheme.mutedSurface,
+                  child: Icon(
+                    Icons.check_circle_outline,
+                    color: AppTheme.primary,
+                  ),
+                ),
+                title: Text(
+                  item.label,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
                 subtitle: Text(item.tip),
-
                 trailing: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: item.score >= 8
-                        ? AppTheme.mutedSurface
-                        : item.score >= 5
-                        ? AppTheme.mutedSurface
-                        : AppTheme.mutedSurface,
+                    color: AppTheme.mutedSurface,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     "${item.score}/10",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: AppTheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
@@ -264,7 +278,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                       ],
                     ),
                     actions: [
-                      ElevatedButton(
+                      FilledButton(
                         onPressed: () {
                           Navigator.pop(context);
                           Navigator.pop(context);
