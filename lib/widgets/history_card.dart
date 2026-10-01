@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
 
+
 class HistoryCard extends StatelessWidget {
   const HistoryCard({super.key});
 
@@ -32,7 +33,7 @@ class HistoryCard extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
-            color: const AppTheme.mutedSurface,
+            color: AppTheme.mutedSurface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: AppTheme.textMuted.shade300),
           ),
@@ -56,7 +57,7 @@ class HistoryCard extends StatelessWidget {
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: const AppTheme.mutedSurface,
+                      color: AppTheme.mutedSurface,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
