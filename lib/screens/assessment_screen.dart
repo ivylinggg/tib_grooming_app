@@ -27,13 +27,13 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
   Color _resultColor(String result) {
     switch (OverallResult.classify(result)) {
       case OverallResult.excellent:
-        return Colors.green;
+        return AppTheme.primary;
       case OverallResult.good:
-        return Colors.blue;
+        return AppTheme.primary;
       case OverallResult.needsWork:
-        return Colors.orange;
+        return AppTheme.primary;
       case OverallResult.insufficient:
-        return Colors.red;
+        return AppTheme.primary;
     }
   }
 
@@ -163,10 +163,10 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                   ),
                   decoration: BoxDecoration(
                     color: item.score >= 8
-                        ? Colors.green.shade100
+                        ? AppTheme.primary.shade100
                         : item.score >= 5
-                        ? Colors.orange.shade100
-                        : Colors.red.shade100,
+                        ? AppTheme.primary.shade100
+                        : AppTheme.primary.shade100,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -203,7 +203,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                 messenger.showSnackBar(
                   const SnackBar(
                     content: Text("Failed to save assessment."),
-                    backgroundColor: Colors.red,
+                    backgroundColor: AppTheme.primary,
                   ),
                 );
                 return;
