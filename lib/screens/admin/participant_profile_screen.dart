@@ -393,7 +393,7 @@ class _ParticipantProfileScreenState extends State<ParticipantProfileScreen> {
                                       ? "No Assessment"
                                       : participant.latestResult,
                                   valueColor: participant.latestResult.isEmpty
-                                      ? Colors.grey
+                                      ? AppTheme.textMuted
                                       : _resultColor(participant.latestResult),
                                 ),
                               ),
@@ -498,7 +498,7 @@ class _InfoRow extends StatelessWidget {
             width: 100,
             child: Text(
               label,
-              style: const TextStyle(color: Colors.grey, fontSize: 13),
+              style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
             ),
           ),
           Expanded(
@@ -538,7 +538,7 @@ class _StatBox extends StatelessWidget {
         Text(
           label,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.grey, fontSize: 11),
+          style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
         ),
       ],
     );
