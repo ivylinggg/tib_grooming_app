@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
+
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
 
@@ -67,10 +69,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F6F1),
+      backgroundColor: AppTheme.background,
 
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1F3D73),
+        backgroundColor: AppTheme.primaryDark,
         foregroundColor: Colors.white,
         centerTitle: true,
         title: const Text("Statistics"),
@@ -130,10 +132,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             const SizedBox(height: 30),
 
             Card(
-              elevation: 3,
+              elevation: 0,
 
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
+                side: const BorderSide(color: AppTheme.border),
               ),
 
               child: Padding(
@@ -161,7 +164,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                             PieChartSectionData(
                               value: pass.toDouble(),
                               title: "PASS\n$pass",
-                              color: Colors.green,
+                              color: AppTheme.primary,
                               radius: 70,
                               titleStyle: const TextStyle(
                                 color: Colors.white,
@@ -172,7 +175,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                             PieChartSectionData(
                               value: fail.toDouble(),
                               title: "FAIL\n$fail",
-                              color: Colors.red,
+                              color: AppTheme.secondary,
                               radius: 70,
                               titleStyle: const TextStyle(
                                 color: Colors.white,
@@ -196,7 +199,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           children: const [
                             CircleAvatar(
                               radius: 7,
-                              backgroundColor: Colors.green,
+                              backgroundColor: AppTheme.primary,
                             ),
 
                             SizedBox(width: 8),
@@ -209,7 +212,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           children: const [
                             CircleAvatar(
                               radius: 7,
-                              backgroundColor: Colors.red,
+                              backgroundColor: AppTheme.secondary,
                             ),
 
                             SizedBox(width: 8),
@@ -387,14 +390,22 @@ class _StatisticCard extends StatelessWidget {
       height: 135,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8)],
+        border: Border.all(color: AppTheme.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: const Color(0xFF1F3D73), size: 30),
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: AppTheme.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: AppTheme.primary, size: 22),
+          ),
 
           const SizedBox(height: 12),
 
