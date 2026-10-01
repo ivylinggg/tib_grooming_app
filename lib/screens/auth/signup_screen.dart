@@ -321,7 +321,7 @@ class _PasswordRequirements extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black12),
+        border: Border.all(color: AppTheme.border.withValues(alpha: 0.35)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -366,7 +366,7 @@ class _Requirement extends StatelessWidget {
           Icon(
             met ? Icons.check_circle : Icons.radio_button_unchecked,
             size: 16,
-            color: met ? AppTheme.success : Colors.black38,
+            color: met ? AppTheme.success : AppTheme.textMuted.withValues(alpha: 0.65),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -374,7 +374,7 @@ class _Requirement extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 13,
-                color: met ? Colors.black87 : AppTheme.textMuted,
+                color: met ? AppTheme.text : AppTheme.textMuted,
               ),
             ),
           ),
