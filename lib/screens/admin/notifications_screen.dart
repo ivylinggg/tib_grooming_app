@@ -89,7 +89,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 child: Text(
                   "Could not load notifications: ${snapshot.error}",
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.red),
+                  style: const TextStyle(color: AppTheme.error),
                 ),
               ),
             );
@@ -112,7 +112,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
               return Card(
                 elevation: isRead ? 0 : 2,
-                color: isRead ? Colors.white : const Color(0xFFEFF3FA),
+                color: isRead ? Colors.white : const AppTheme.mutedSurface,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                   side: BorderSide(
@@ -124,10 +124,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 child: ListTile(
                   onTap: () => _openNotification(notification),
                   leading: CircleAvatar(
-                    backgroundColor: Colors.red.withValues(alpha: 0.1),
+                    backgroundColor: AppTheme.error.withValues(alpha: 0.1),
                     child: const Icon(
                       Icons.warning_amber_rounded,
-                      color: Colors.red,
+                      color: AppTheme.error,
                     ),
                   ),
                   title: Text(
@@ -151,7 +151,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           width: 10,
                           height: 10,
                           decoration: const BoxDecoration(
-                            color: Color(0xFF1F3D73),
+                            color: AppTheme.primary,
                             shape: BoxShape.circle,
                           ),
                         ),
