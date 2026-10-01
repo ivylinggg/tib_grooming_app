@@ -603,7 +603,7 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
         borderRadius: BorderRadius.circular(16),
         child: Container(
           width: double.infinity,
-          color: AppTheme.textMuted.shade100,
+          color: AppTheme.mutedSurface,
           child: MirroredWebCameraPreview(
             key: _previewKey,
             onCapture: _onWebCapture,
@@ -616,7 +616,7 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppTheme.textMuted.shade100,
+        color: AppTheme.mutedSurface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Center(
