@@ -823,7 +823,7 @@ class _PhotoCard extends StatelessWidget {
               url,
               fit: BoxFit.cover,
               errorBuilder: (_, _, _) => Container(
-                color: AppTheme.textMuted.shade200,
+                color: AppTheme.border,
                 alignment: Alignment.center,
                 child: const Icon(Icons.broken_image_outlined),
               ),
