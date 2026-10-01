@@ -334,7 +334,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       child: LinearProgressIndicator(
                         value: completionRate,
                         minHeight: 12,
-                        backgroundColor: AppTheme.textMuted.shade200,
+                        backgroundColor: AppTheme.border,
                         color: AppTheme.primary,
                       ),
                     ),
@@ -414,7 +414,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                           height: 10,
                                           width: constraints.maxWidth,
                                           decoration: BoxDecoration(
-                                            color: AppTheme.textMuted.shade200,
+                                            color: AppTheme.border,
                                             borderRadius: BorderRadius.circular(
                                               6,
                                             ),
