@@ -443,7 +443,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
             child: Center(
               child: Text(
                 "Historical activity not recorded",
-                style: TextStyle(color: Colors.grey),
+                style: TextStyle(color: AppTheme.textMuted),
               ),
             ),
           )
@@ -522,7 +522,7 @@ class _InfoRow extends StatelessWidget {
             width: 100,
             child: Text(
               label,
-              style: const TextStyle(color: Colors.grey, fontSize: 13),
+              style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
             ),
           ),
           Expanded(
