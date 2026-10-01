@@ -19,13 +19,13 @@ class ResultScreen extends StatelessWidget {
   Color get resultColor {
     switch (OverallResult.classify(result.overall)) {
       case OverallResult.excellent:
-        return Colors.green;
+        return AppTheme.primary;
       case OverallResult.good:
-        return Colors.blue;
+        return AppTheme.primary;
       case OverallResult.needsWork:
-        return Colors.orange;
+        return AppTheme.primary;
       case OverallResult.insufficient:
-        return Colors.red;
+        return AppTheme.primary;
     }
   }
 
@@ -214,7 +214,7 @@ class ResultScreen extends StatelessWidget {
                   messenger.showSnackBar(
                     const SnackBar(
                       content: Text("Sign in as Staff to view your dashboard."),
-                      backgroundColor: Colors.red,
+                      backgroundColor: AppTheme.primary,
                     ),
                   );
                   return;
