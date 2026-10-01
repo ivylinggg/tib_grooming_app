@@ -293,7 +293,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     if (_checkingAccess) {
       return const Scaffold(
-        backgroundColor: Color(0xFFF8F6F1),
+        backgroundColor: AppTheme.background,
         body: Center(child: CircularProgressIndicator()),
       );
     }
@@ -614,7 +614,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: const CircleAvatar(
-                        backgroundColor: Color(0xFF1F3D73),
+                        backgroundColor: AppTheme.primary,
                         child: Icon(
                           Icons.person,
                           color: Colors.white,
@@ -684,7 +684,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: const CircleAvatar(
-                        backgroundColor: Color(0xFF1F3D73),
+                        backgroundColor: AppTheme.primary,
                         child: Icon(Icons.badge, color: Colors.white, size: 18),
                       ),
                       title: Text(staff.displayName),
