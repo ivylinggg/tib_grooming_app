@@ -224,7 +224,7 @@ class _TrainingHistoryScreenState extends State<TrainingHistoryScreen> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: const BorderSide(
-            color: Color(0xFF1F3D73),
+            color: AppTheme.primary,
             width: 2,
           ),
         ),
@@ -280,7 +280,7 @@ class _TrainingHistoryScreenState extends State<TrainingHistoryScreen> {
                 ),
                 child: const Icon(
                   Icons.description_outlined,
-                  color: Color(0xFF1F3D73),
+                  color: AppTheme.primary,
                   size: 28,
                 ),
               ),
@@ -310,7 +310,7 @@ class _TrainingHistoryScreenState extends State<TrainingHistoryScreen> {
                     Text(
                       crew,
                       style: const TextStyle(
-                        color: Color(0xFF1F3D73),
+                        color: AppTheme.primary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -393,13 +393,13 @@ class _TrainingHistoryScreenState extends State<TrainingHistoryScreen> {
                               children: [
                                 const Icon(
                                   Icons.error_outline,
-                                  color: Colors.red,
+                                  color: AppTheme.error,
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
                                     _error!,
-                                    style: const TextStyle(color: Colors.red),
+                                    style: const TextStyle(color: AppTheme.error),
                                   ),
                                 ),
                                 TextButton(
@@ -458,7 +458,7 @@ class _TrainingHistoryScreenState extends State<TrainingHistoryScreen> {
                                     style: const TextStyle(
                                       fontSize: 19,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF1F3D73),
+                                      color: AppTheme.primary,
                                     ),
                                   ),
                                 ),
@@ -585,7 +585,7 @@ class _TrainingReportDetailScreen extends StatelessWidget {
                   backgroundColor: AppTheme.primary.withValues(alpha: 0.10),
                   child: const Icon(
                     Icons.person_outline,
-                    color: Color(0xFF1F3D73),
+                    color: AppTheme.primary,
                   ),
                 ),
                 title: Text(
