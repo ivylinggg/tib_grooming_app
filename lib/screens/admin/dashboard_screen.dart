@@ -329,7 +329,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 padding: const EdgeInsets.all(25),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [AppTheme.primaryDark, AppTheme.primary],
+                    colors: [AppTheme.primaryDark, AppTheme.secondary],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -614,7 +614,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: const CircleAvatar(
-                        backgroundColor: AppTheme.primary,
+                        backgroundColor: AppTheme.primaryDark,
                         child: Icon(
                           Icons.person,
                           color: Colors.white,
@@ -684,7 +684,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: const CircleAvatar(
-                        backgroundColor: AppTheme.primary,
+                        backgroundColor: AppTheme.primaryDark,
                         child: Icon(Icons.badge, color: Colors.white, size: 18),
                       ),
                       title: Text(staff.displayName),
@@ -842,7 +842,7 @@ class _DashboardButton extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: AppTheme.primary,
+          backgroundColor: AppTheme.primaryDark,
           child: Icon(icon, color: Colors.white),
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
