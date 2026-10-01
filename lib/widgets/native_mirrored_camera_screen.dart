@@ -272,7 +272,7 @@ class _NativeMirroredCameraScreenState
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: Colors.white,
-                        border: Border.all(color: AppTheme.primaryDark26, width: 3),
+                        border: Border.all(color: AppTheme.primaryDark.withValues(alpha: 0.26), width: 3),
                       ),
                       child: _capturing
                           ? const Padding(
