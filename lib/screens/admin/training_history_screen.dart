@@ -219,7 +219,7 @@ class _TrainingHistoryScreenState extends State<TrainingHistoryScreen> {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: Colors.black87),
+          borderSide: const BorderSide(color: AppTheme.text),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
@@ -335,7 +335,7 @@ class _TrainingHistoryScreenState extends State<TrainingHistoryScreen> {
               const SizedBox(width: 8),
               const Icon(
                 Icons.chevron_right,
-                color: Colors.black45,
+                color: AppTheme.textMuted,
                 size: 28,
               ),
             ],
@@ -421,7 +421,7 @@ class _TrainingHistoryScreenState extends State<TrainingHistoryScreen> {
                                   const Icon(
                                     Icons.folder_open_outlined,
                                     size: 64,
-                                    color: Colors.black26,
+                                    color: AppTheme.border,
                                   ),
                                   const SizedBox(height: 16),
                                   Text(
@@ -522,7 +522,7 @@ class _InfoChip extends StatelessWidget {
             label,
             style: const TextStyle(
               fontSize: 12,
-              color: Colors.black87,
+              color: AppTheme.text,
             ),
           ),
         ],
@@ -597,7 +597,7 @@ class _TrainingReportDetailScreen extends StatelessWidget {
                 ),
                 trailing: const Icon(
                   Icons.chevron_right,
-                  color: Colors.black45,
+                  color: AppTheme.textMuted,
                 ),
                 onTap: () {
                   Navigator.push(
