@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
+
 import '../../models/app_user.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
@@ -184,10 +186,10 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text("Edit Staff"),
-        backgroundColor: const Color(0xFF1F3D73),
+        backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -313,7 +315,7 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
             ElevatedButton(
               onPressed: _saving ? null : _save,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1F3D73),
+                backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
