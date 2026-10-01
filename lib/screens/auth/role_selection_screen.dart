@@ -186,7 +186,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
     }
