@@ -199,13 +199,13 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
           children: [
             Text(
               widget.staff.email,
-              style: const TextStyle(color: Colors.grey, fontSize: 13),
+              style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
             ),
             const SizedBox(height: 4),
             const Text(
               "Email cannot be changed here -- it's tied to this "
               "account's Firebase Authentication sign-in.",
-              style: TextStyle(color: Colors.grey, fontSize: 12),
+              style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
             ),
 
             const SizedBox(height: 20),
