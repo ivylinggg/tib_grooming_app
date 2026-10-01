@@ -199,7 +199,7 @@ class _ParticipantManagementScreenState
             SizedBox(height: 4),
             Text(
               "Manage registrations, assessments and participant records",
-              style: TextStyle(color: Colors.grey, fontSize: 13),
+              style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
             ),
           ],
         ),
@@ -302,7 +302,7 @@ class _ParticipantManagementScreenState
                         borderRadius: BorderRadius.circular(18),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
+                            color: AppTheme.primaryDark.withValues(alpha: 0.06),
                             blurRadius: 15,
                             offset: const Offset(0, 5),
                           ),
@@ -331,7 +331,7 @@ class _ParticipantManagementScreenState
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              color: Colors.grey,
+                              color: AppTheme.textMuted,
                               fontSize: 12,
                             ),
                           ),
@@ -364,7 +364,7 @@ class _ParticipantManagementScreenState
                       AppTheme.warning,
                     ),
 
-                    card("Today", today.toString(), Icons.today, Colors.purple),
+                    card("Today", today.toString(), Icons.today, AppTheme.primaryDark),
                   ],
                 );
               },
@@ -422,7 +422,7 @@ class _ParticipantManagementScreenState
                           borderRadius: BorderRadius.circular(22),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
+                              color: AppTheme.primaryDark.withValues(alpha: 0.06),
                               blurRadius: 15,
                               offset: const Offset(0, 6),
                             ),
