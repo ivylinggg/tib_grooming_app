@@ -124,7 +124,7 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Please enter both First Name and Last Name."),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
       return;
@@ -155,7 +155,7 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
       messenger.showSnackBar(
         const SnackBar(
           content: Text("Staff profile updated successfully."),
-          backgroundColor: Colors.green,
+          backgroundColor: AppTheme.success,
         ),
       );
       navigator.pop();
@@ -172,7 +172,7 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
     };
 
     messenger.showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(content: Text(message), backgroundColor: AppTheme.error),
     );
   }
 
@@ -180,7 +180,7 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
   Widget build(BuildContext context) {
     if (_checkingAccess) {
       return const Scaffold(
-        backgroundColor: Color(0xFFF5F7FB),
+        backgroundColor: AppTheme.background,
         body: Center(child: CircularProgressIndicator()),
       );
     }
@@ -287,22 +287,22 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.08),
+                    color: AppTheme.warning.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: Colors.orange.withValues(alpha: 0.3),
+                      color: AppTheme.warning.withValues(alpha: 0.3),
                     ),
                   ),
                   child: const Row(
                     children: [
-                      Icon(Icons.warning_amber_outlined, color: Colors.orange),
+                      Icon(Icons.warning_amber_outlined, color: AppTheme.warning),
                       SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           "Changing this account to Admin grants full "
                           "Admin access. This account will no longer "
                           "appear under Staff Management once saved.",
-                          style: TextStyle(color: Colors.orange, fontSize: 13),
+                          style: TextStyle(color: AppTheme.warning, fontSize: 13),
                         ),
                       ),
                     ],
