@@ -768,67 +768,6 @@ class _NotificationBellAction extends StatelessWidget {
   }
 }
 
-class _AdminUiMetric extends StatelessWidget {
-  const _AdminUiMetric({
-    required this.title,
-    required this.value,
-    required this.icon,
-    this.iconColor = AppTheme.primary,
-  });
-
-  final String title;
-  final String value;
-  final IconData icon;
-  final Color iconColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(15),
-        decoration: BoxDecoration(
-          color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppTheme.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: iconColor, size: 20),
-            ),
-            const SizedBox(height: 11),
-            Text(
-              value,
-              style: const TextStyle(
-                color: AppTheme.text,
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              title,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: AppTheme.textMuted,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _OverviewCard extends StatelessWidget {
   final String title;
   final String value;
