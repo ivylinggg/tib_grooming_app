@@ -167,13 +167,13 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
   Color _resultColor(String result) {
     switch (OverallResult.classify(result)) {
       case OverallResult.excellent:
-        return Colors.green;
+        return AppTheme.success;
       case OverallResult.good:
-        return Colors.blue;
+        return AppTheme.primary;
       case OverallResult.needsWork:
-        return Colors.orange;
+        return AppTheme.warning;
       case OverallResult.insufficient:
-        return Colors.red;
+        return AppTheme.error;
     }
   }
 
@@ -181,7 +181,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
   Widget build(BuildContext context) {
     if (_checkingAccess) {
       return const Scaffold(
-        backgroundColor: Color(0xFFF5F7FB),
+        backgroundColor: AppTheme.background,
         body: Center(child: CircularProgressIndicator()),
       );
     }
@@ -238,7 +238,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
-              decoration: const BoxDecoration(color: Color(0xFF1F3D73)),
+              decoration: const BoxDecoration(color: AppTheme.primary),
               child: Column(
                 children: [
                   CircleAvatar(
@@ -251,7 +251,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                       style: const TextStyle(
                         fontSize: 34,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1F3D73),
+                        color: AppTheme.primary,
                       ),
                     ),
                   ),
@@ -385,7 +385,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
             padding: const EdgeInsets.all(18),
             child: Row(
               children: [
-                const Icon(Icons.groups, color: Color(0xFF1F3D73)),
+                const Icon(Icons.groups, color: AppTheme.primary),
                 const SizedBox(width: 12),
                 Text(
                   "${_handledParticipants.length}",
@@ -414,13 +414,13 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.blueGrey.withValues(alpha: 0.06),
+            color: AppTheme.primaryGrey.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.blueGrey.withValues(alpha: 0.2)),
+            border: Border.all(color: AppTheme.primaryGrey.withValues(alpha: 0.2)),
           ),
           child: const Row(
             children: [
-              Icon(Icons.info_outline, color: Colors.blueGrey, size: 20),
+              Icon(Icons.info_outline, color: AppTheme.primaryGrey, size: 20),
               SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -428,7 +428,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                   "Staff-Participant tracking was added are listed here. "
                   "Earlier activity, if any, was not recorded and cannot "
                   "be reconstructed.",
-                  style: TextStyle(color: Colors.blueGrey, fontSize: 12),
+                  style: TextStyle(color: AppTheme.primaryGrey, fontSize: 12),
                 ),
               ),
             ],
