@@ -42,17 +42,19 @@ class ResultScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              width: 82,
-              height: 82,
-              decoration: BoxDecoration(
-                color: AppTheme.accent.withValues(alpha: 0.16),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.verified_rounded,
-                color: AppTheme.primary,
-                size: 46,
+            Center(
+              child: Container(
+                width: 84,
+                height: 84,
+                decoration: BoxDecoration(
+                  color: AppTheme.mutedSurface,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.verified_rounded,
+                  color: AppTheme.primary,
+                  size: 46,
+                ),
               ),
             ),
 
@@ -61,7 +63,11 @@ class ResultScreen extends StatelessWidget {
             const Text(
               "Assessment Completed",
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.text,
+              ),
             ),
 
             const SizedBox(height: 30),
@@ -158,8 +164,17 @@ class ResultScreen extends StatelessWidget {
             ...result.criteria.map(
               (c) => Card(
                 child: ListTile(
-                  leading: CircleAvatar(child: Text(c.score.toString())),
-                  title: Text(c.label),
+                  leading: const CircleAvatar(
+                    backgroundColor: AppTheme.mutedSurface,
+                    child: Icon(
+                      Icons.check_circle_outline,
+                      color: AppTheme.primary,
+                    ),
+                  ),
+                  title: Text(
+                    c.label,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   subtitle: Text(c.tip),
                 ),
               ),
