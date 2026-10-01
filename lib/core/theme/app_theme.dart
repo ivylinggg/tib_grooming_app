@@ -18,8 +18,8 @@ class AppTheme {
   static const Color textMuted = Color(0xFF687386);
   static const Color border = Color(0xFFDCE3EC);
 
-  static const Color success = Color(0xFF3D8B62);
-  static const Color warning = Color(0xFFC08A18);
+  static const Color success = primary;
+  static const Color warning = primary;
   static const Color error = Color(0xFF123B7A);
 
   static ThemeData get lightTheme {
