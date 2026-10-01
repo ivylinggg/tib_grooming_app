@@ -318,7 +318,7 @@ class _CheckInCardState extends State<CheckInCard> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         boxShadow: const [
-          BoxShadow(color: AppTheme.text12, blurRadius: 8, offset: Offset(0, 3)),
+          BoxShadow(color: AppTheme.border, blurRadius: 8, offset: Offset(0, 3)),
         ],
       ),
       child: Column(
