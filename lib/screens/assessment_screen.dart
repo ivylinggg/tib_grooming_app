@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../core/theme/app_theme.dart';
 import '../models/assessment_result.dart';
 import '../models/overall_result.dart';
 import '../services/assessment_service.dart';
@@ -38,10 +40,9 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text("Grooming Assessment"),
-        backgroundColor: const Color(0xFF1F3D73),
-        foregroundColor: Colors.white,
       ),
 
       body: ListView(
@@ -58,9 +59,26 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
 
           const SizedBox(height: 20),
 
-          const Text(
-            "AI Assessment Result",
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          Row(
+            children: [
+              Container(
+                width: 4,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: AppTheme.secondary,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                "AI Assessment Result",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.text,
+                ),
+              ),
+            ],
           ),
 
           const SizedBox(height: 20),
@@ -105,9 +123,26 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
 
           const SizedBox(height: 20),
 
-          const Text(
-            "Assessment Details",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          Row(
+            children: [
+              Container(
+                width: 4,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: AppTheme.accent,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                "Assessment Details",
+                style: TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.text,
+                ),
+              ),
+            ],
           ),
 
           const SizedBox(height: 10),
@@ -145,11 +180,9 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
 
           const SizedBox(height: 30),
 
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1F3D73),
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 55),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(double.infinity, 54),
             ),
             onPressed: () async {
               final score = widget.assessmentResult.totalScore;
