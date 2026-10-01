@@ -93,7 +93,7 @@ class _AssessmentManagementScreenState
       case OverallResult.excellent:
         return AppTheme.primary;
       case OverallResult.good:
-        return Colors.blue;
+        return AppTheme.primary;
       case OverallResult.needsWork:
         return AppTheme.warning;
       case OverallResult.insufficient:
@@ -186,7 +186,7 @@ class _AssessmentManagementScreenState
   Widget build(BuildContext context) {
     if (_checkingAccess) {
       return const Scaffold(
-        backgroundColor: Color(0xFFF5F7FA),
+        backgroundColor: AppTheme.background,
         body: Center(child: CircularProgressIndicator()),
       );
     }
