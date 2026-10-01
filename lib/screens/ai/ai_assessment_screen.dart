@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import '../core/theme/app_theme.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../api/assessment_api.dart';
@@ -136,7 +138,7 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
             "Camera permission is required to capture the grooming "
             "photo. Please enable it in Settings.",
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.primary,
           action: SnackBarAction(
             label: "Open Settings",
             textColor: Colors.white,
@@ -157,7 +159,7 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
           content: Text(
             "Camera permission is required to capture the grooming photo.",
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.primary,
         ),
       );
       return;
@@ -210,7 +212,7 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
             content: Text(
               "Camera permission is required to capture the grooming photo.",
             ),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.primary,
           ),
         );
         break;
@@ -222,7 +224,7 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
               "Camera permission is required to capture the grooming "
               "photo. Please enable it in Settings.",
             ),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.primary,
             action: SnackBarAction(
               label: "Open Settings",
               textColor: Colors.white,
@@ -281,7 +283,7 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(content: Text(message), backgroundColor: AppTheme.primary),
     );
   }
 
@@ -322,7 +324,7 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(kFullBodyPhotoErrorMessage),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.primary,
         ),
       );
     }
@@ -366,7 +368,7 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
         messenger.showSnackBar(
           const SnackBar(
             content: Text("Participant not found."),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.primary,
           ),
         );
         return;
@@ -386,7 +388,7 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
         messenger.showSnackBar(
           const SnackBar(
             content: Text(kFullBodyPhotoErrorMessage),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.primary,
           ),
         );
         return;
@@ -409,7 +411,7 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
         messenger.showSnackBar(
           const SnackBar(
             content: Text("AI assessment failed. Please try again."),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.primary,
           ),
         );
         return;
@@ -436,7 +438,7 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
               assessmentService.lastUploadError ??
                   "Failed to upload today's photo.",
             ),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.primary,
           ),
         );
         return;
@@ -459,7 +461,7 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text("Assessment failed: $e"),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.primary,
         ),
       );
     } finally {
@@ -476,7 +478,7 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("AI Grooming Detection"),
-        backgroundColor: const Color(0xFF1F3D73),
+        backgroundColor: const AppTheme.primary,
         foregroundColor: Colors.white,
       ),
       body: Padding(
@@ -513,7 +515,7 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
                 height: 55,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1F3D73),
+                    backgroundColor: const AppTheme.primary,
                     foregroundColor: Colors.white,
                   ),
                   icon: capturing
@@ -563,7 +565,7 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
                       height: 55,
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1F3D73),
+                          backgroundColor: const AppTheme.primary,
                           foregroundColor: Colors.white,
                         ),
                         icon: analyzing
@@ -600,7 +602,7 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
         borderRadius: BorderRadius.circular(16),
         child: Container(
           width: double.infinity,
-          color: Colors.grey.shade100,
+          color: AppTheme.textMuted.shade100,
           child: MirroredWebCameraPreview(
             key: _previewKey,
             onCapture: _onWebCapture,
@@ -613,7 +615,7 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: AppTheme.textMuted.shade100,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Center(
@@ -627,7 +629,7 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
                     SizedBox(height: 12),
                     Text(
                       "Validating photo...",
-                      style: TextStyle(color: Colors.grey),
+                      style: TextStyle(color: AppTheme.textMuted),
                     ),
                   ],
                 )
@@ -637,14 +639,14 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
                     Icon(
                       Icons.camera_alt_outlined,
                       size: 56,
-                      color: Colors.grey,
+                      color: AppTheme.textMuted,
                     ),
                     SizedBox(height: 12),
                     Text(
                       "Please stand straight and make sure your full body "
                       "from head to feet is visible.",
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey),
+                      style: TextStyle(color: AppTheme.textMuted),
                     ),
                   ],
                 ),
