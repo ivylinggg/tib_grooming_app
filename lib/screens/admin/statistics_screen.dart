@@ -334,7 +334,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       child: LinearProgressIndicator(
                         value: completionRate,
                         minHeight: 12,
-                        backgroundColor: Colors.grey.shade200,
+                        backgroundColor: AppTheme.textMuted.shade200,
                         color: AppTheme.primary,
                       ),
                     ),
@@ -342,7 +342,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     Text(
                       "$_pending Participant(s) still pending their first "
                       "assessment.",
-                      style: const TextStyle(color: Colors.grey, fontSize: 13),
+                      style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
                     ),
                   ],
                 ),
@@ -370,7 +370,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                         child: Center(
                           child: Text(
                             "No assessment records yet",
-                            style: TextStyle(color: Colors.grey),
+                            style: TextStyle(color: AppTheme.textMuted),
                           ),
                         ),
                       )
@@ -414,7 +414,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                           height: 10,
                                           width: constraints.maxWidth,
                                           decoration: BoxDecoration(
-                                            color: Colors.grey.shade200,
+                                            color: AppTheme.textMuted.shade200,
                                             borderRadius: BorderRadius.circular(
                                               6,
                                             ),
@@ -467,7 +467,7 @@ class _StatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8)],
+        boxShadow: const [BoxShadow(color: AppTheme.border.withValues(alpha: 0.35), blurRadius: 8)],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -484,7 +484,7 @@ class _StatCard extends StatelessWidget {
             label,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: Colors.grey, fontSize: 12),
+            style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
           ),
         ],
       ),
