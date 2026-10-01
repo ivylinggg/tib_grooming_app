@@ -48,7 +48,7 @@ class WelcomeScreen extends StatelessWidget {
                     const Text(
                       'BATIK AIR',
                       style: TextStyle(
-                        color: AppTheme.accent,
+                        color: Colors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 3,
@@ -68,7 +68,7 @@ class WelcomeScreen extends StatelessWidget {
                     const Text(
                       'System',
                       style: TextStyle(
-                        color: AppTheme.accent,
+                        color: Colors.white,
                         fontSize: 28,
                         fontWeight: FontWeight.w500,
                       ),
