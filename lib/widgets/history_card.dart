@@ -24,7 +24,7 @@ class HistoryCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 10),
-            Expanded(child: Divider(color: AppTheme.textMuted.shade300, thickness: 1)),
+            Expanded(child: Divider(color: AppTheme.border, thickness: 1)),
           ],
         ),
 
@@ -35,7 +35,7 @@ class HistoryCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppTheme.mutedSurface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.textMuted.shade300),
+            border: Border.all(color: AppTheme.border),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
