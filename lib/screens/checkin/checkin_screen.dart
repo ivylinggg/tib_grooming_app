@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
+
 import '../../widgets/checkin_card.dart';
 import '../../widgets/hero_banner.dart';
 import '../../widgets/top_navigation.dart';
