@@ -64,6 +64,18 @@ class AppTheme {
           letterSpacing: 0.1,
         ),
       ),
+      iconTheme: const IconThemeData(color: textMuted),
+      listTileTheme: const ListTileThemeData(
+        iconColor: primary,
+        textColor: text,
+        dense: false,
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: mutedSurface,
+        selectedColor: primary,
+        side: const BorderSide(color: border),
+        labelStyle: const TextStyle(color: text),
+      ),
       cardTheme: CardThemeData(
         color: surface,
         elevation: 0,
@@ -201,6 +213,22 @@ class AppTheme {
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: secondary,
+      ),
+      radioTheme: RadioThemeData(
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return primary;
+          return textMuted;
+        }),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return Colors.white;
+          return textMuted;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return primary;
+          return border;
+        }),
       ),
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
