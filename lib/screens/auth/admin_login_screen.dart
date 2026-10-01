@@ -37,7 +37,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Please enter email and password."),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
       return;
@@ -71,7 +71,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(e.message ?? "Sign in failed."),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
     } catch (e) {
@@ -84,7 +84,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       messenger.showSnackBar(
         const SnackBar(
           content: Text("Sign in failed."),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
     }
