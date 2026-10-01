@@ -215,7 +215,7 @@ class _TrainingHistoryScreenState extends State<TrainingHistoryScreen> {
         fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: Colors.black87),
+          borderSide: const BorderSide(color: AppTheme.text),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
@@ -249,7 +249,7 @@ class _TrainingHistoryScreenState extends State<TrainingHistoryScreen> {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
-      elevation: 2,
+      elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
       ),
@@ -386,7 +386,7 @@ class _TrainingHistoryScreenState extends State<TrainingHistoryScreen> {
                           Container(
                             padding: const EdgeInsets.all(18),
                             decoration: BoxDecoration(
-                              color: Colors.red.withValues(alpha: 0.08),
+                              color: AppTheme.secondary.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(18),
                             ),
                             child: Row(
