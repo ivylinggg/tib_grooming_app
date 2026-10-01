@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../core/theme/app_theme.dart';
+import '../../core/theme/app_theme.dart';
+
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../api/assessment_api.dart';
@@ -478,7 +479,7 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("AI Grooming Detection"),
-        backgroundColor: const AppTheme.primary,
+        backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
       ),
       body: Padding(
@@ -515,7 +516,7 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
                 height: 55,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const AppTheme.primary,
+                    backgroundColor: AppTheme.primary,
                     foregroundColor: Colors.white,
                   ),
                   icon: capturing
@@ -565,7 +566,7 @@ class _AIAssessmentScreenState extends State<AIAssessmentScreen> {
                       height: 55,
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const AppTheme.primary,
+                          backgroundColor: AppTheme.primary,
                           foregroundColor: Colors.white,
                         ),
                         icon: analyzing
