@@ -5,22 +5,22 @@ class AppTheme {
   AppTheme._();
 
   // Batik Air-inspired enterprise palette.
-  static const Color primary = Color(0xFF123B7A);
-  static const Color primaryDark = Color(0xFF082751);
-  static const Color secondary = Color(0xFFD71920);
-  static const Color accent = Color(0xFFE7B95A);
+  static const Color primary = Color(0xFFC42454);
+  static const Color primaryDark = Color(0xFF6B3916);
+  static const Color secondary = Color(0xFFC42454);
+  static const Color accent = Color(0xFFF5D104);
 
-  static const Color background = Color(0xFFF4F6F9);
+  static const Color background = Color(0xFFF7F5F2);
   static const Color surface = Colors.white;
   static const Color mutedSurface = Color(0xFFEEF2F7);
 
-  static const Color text = Color(0xFF152033);
-  static const Color textMuted = Color(0xFF687386);
-  static const Color border = Color(0xFFDCE3EC);
+  static const Color text = Color(0xFF2B2522);
+  static const Color textMuted = Color(0xFF756D68);
+  static const Color border = Color(0xFFE4DDD7);
 
-  static const Color success = Color(0xFF248A5A);
-  static const Color warning = Color(0xFFB97918);
-  static const Color error = Color(0xFFC52B35);
+  static const Color success = Color(0xFF3D8B62);
+  static const Color warning = Color(0xFFC08A18);
+  static const Color error = Color(0xFFC42454);
 
   static ThemeData get lightTheme {
     final base = ThemeData.light(useMaterial3: true);
