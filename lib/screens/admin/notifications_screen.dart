@@ -112,7 +112,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
               return Card(
                 elevation: isRead ? 0 : 2,
-                color: isRead ? Colors.white : const AppTheme.mutedSurface,
+                color: isRead ? Colors.white : AppTheme.mutedSurface,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                   side: BorderSide(
