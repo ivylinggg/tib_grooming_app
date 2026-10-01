@@ -21,8 +21,6 @@ class CheckInScreen extends StatelessWidget {
             children: [
               TopNavigation(isRegister: false),
 
-              SizedBox(height: 16),
-
               HeroBanner(
                 badge: "DAILY GROOMING CHECK-IN",
                 title: "Grooming",
