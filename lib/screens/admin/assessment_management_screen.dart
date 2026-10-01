@@ -91,13 +91,13 @@ class _AssessmentManagementScreenState
   Color _resultColor(String result) {
     switch (OverallResult.classify(result)) {
       case OverallResult.excellent:
-        return Colors.green;
+        return AppTheme.primary;
       case OverallResult.good:
         return Colors.blue;
       case OverallResult.needsWork:
-        return Colors.orange;
+        return AppTheme.warning;
       case OverallResult.insufficient:
-        return Colors.red;
+        return AppTheme.secondary;
     }
   }
 
@@ -211,7 +211,7 @@ class _AssessmentManagementScreenState
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(18),
                   borderSide: BorderSide.none,
                 ),
               ),
@@ -233,7 +233,7 @@ class _AssessmentManagementScreenState
                         horizontal: 12,
                       ),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(18),
                       ),
                     ),
                     items: _statusOptions
@@ -288,7 +288,7 @@ class _AssessmentManagementScreenState
                       child: Text(
                         "Could not load assessments.\n${snapshot.error}",
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(color: AppTheme.secondary),
                       ),
                     ),
                   );
@@ -331,7 +331,7 @@ class _AssessmentManagementScreenState
 
                     return Card(
                       margin: const EdgeInsets.only(bottom: 12),
-                      elevation: 2,
+                      elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18),
                       ),
