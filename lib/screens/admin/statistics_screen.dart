@@ -168,13 +168,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   Color _resultColor(String label) {
     switch (label) {
       case "Excellent":
-        return Colors.green;
+        return AppTheme.success;
       case "Good":
-        return Colors.blue;
+        return AppTheme.primary;
       case "Needs Work":
-        return Colors.orange;
+        return AppTheme.warning;
       default:
-        return Colors.red;
+        return AppTheme.error;
     }
   }
 
@@ -182,7 +182,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   Widget build(BuildContext context) {
     if (_checkingAccess) {
       return const Scaffold(
-        backgroundColor: Color(0xFFF5F7FA),
+        backgroundColor: AppTheme.background,
         body: Center(child: CircularProgressIndicator()),
       );
     }
@@ -210,12 +210,12 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const Icon(Icons.error_outline, size: 48, color: AppTheme.error),
               const SizedBox(height: 12),
               Text(
                 _error!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.red),
+                style: const TextStyle(color: AppTheme.error),
               ),
               const SizedBox(height: 16),
               ElevatedButton(onPressed: _loadStats, child: const Text("Retry")),
@@ -323,7 +323,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           "${(completionRate * 100).toStringAsFixed(0)}%",
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1F3D73),
+                            color: AppTheme.primary,
                           ),
                         ),
                       ],
