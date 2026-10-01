@@ -168,7 +168,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(18),
                   borderSide: BorderSide.none,
                 ),
               ),
@@ -193,12 +193,12 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const Icon(Icons.error_outline, size: 48, color: AppTheme.secondary),
               const SizedBox(height: 12),
               Text(
                 _error!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.red),
+                style: const TextStyle(color: AppTheme.secondary),
               ),
               const SizedBox(height: 16),
               ElevatedButton(onPressed: _loadStaff, child: const Text("Retry")),
@@ -264,7 +264,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
 
           return Card(
             margin: const EdgeInsets.only(bottom: 14),
-            elevation: 2,
+            elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(18),
             ),
