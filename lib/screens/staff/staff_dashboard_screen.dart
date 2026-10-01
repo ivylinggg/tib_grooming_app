@@ -467,7 +467,7 @@ class _EmptyResultCard extends StatelessWidget {
         child: Text(
           message,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.black54),
+          style: const TextStyle(color: AppTheme.textMuted),
         ),
       ),
     );
