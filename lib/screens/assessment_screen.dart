@@ -164,10 +164,10 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                   ),
                   decoration: BoxDecoration(
                     color: item.score >= 8
-                        ? AppTheme.primary.shade100
+                        ? AppTheme.mutedSurface
                         : item.score >= 5
-                        ? AppTheme.primary.shade100
-                        : AppTheme.primary.shade100,
+                        ? AppTheme.mutedSurface
+                        : AppTheme.mutedSurface,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
