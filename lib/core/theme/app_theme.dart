@@ -5,8 +5,8 @@ class AppTheme {
   AppTheme._();
 
   // Batik Air-inspired enterprise palette.
-  static const Color primary = Color(0xFFC42454);
-  static const Color primaryDark = Color(0xFF6B3916);
+  static const Color primary = Color(0xFF6B3916);
+  static const Color primaryDark = Color(0xFF4A2610);
   static const Color secondary = Color(0xFFC42454);
   static const Color accent = Color(0xFFF5D104);
 
@@ -50,7 +50,7 @@ class AppTheme {
         displayColor: text,
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: primary,
+        backgroundColor: primaryDark,
         foregroundColor: Colors.white,
         centerTitle: false,
         elevation: 0,
