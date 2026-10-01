@@ -117,7 +117,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   borderRadius: BorderRadius.circular(14),
                   side: BorderSide(
                     color: isRead
-                        ? AppTheme.textMuted.shade200
+                        ? AppTheme.border
                         : AppTheme.primary.withValues(alpha: 0.3),
                   ),
                 ),
