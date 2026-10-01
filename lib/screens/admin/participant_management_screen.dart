@@ -110,7 +110,7 @@ class _ParticipantManagementScreenState
 
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: AppTheme.secondary,
                 foregroundColor: Colors.white,
               ),
               onPressed: () {
@@ -298,7 +298,7 @@ class _ParticipantManagementScreenState
                       margin: const EdgeInsets.symmetric(horizontal: 5),
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.surface,
                         borderRadius: BorderRadius.circular(18),
                         boxShadow: [
                           BoxShadow(
@@ -347,7 +347,7 @@ class _ParticipantManagementScreenState
                       "Participants",
                       total.toString(),
                       Icons.people,
-                      Colors.blue,
+                      AppTheme.primary,
                     ),
 
                     card(
