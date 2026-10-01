@@ -506,7 +506,7 @@ class _InfoChip extends StatelessWidget {
         vertical: 6,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F5FA),
+        color: AppTheme.background,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
