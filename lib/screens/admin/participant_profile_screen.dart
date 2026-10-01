@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
+
 import '../../models/app_user.dart';
 import '../../models/overall_result.dart';
 import '../../models/participant.dart';
@@ -219,10 +221,10 @@ class _ParticipantProfileScreenState extends State<ParticipantProfileScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text("Participant Profile"),
-        backgroundColor: const Color(0xFF1F3D73),
+        backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
       ),
       body: _buildBody(),
@@ -241,12 +243,12 @@ class _ParticipantProfileScreenState extends State<ParticipantProfileScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const Icon(Icons.error_outline, size: 48, color: AppTheme.error),
               const SizedBox(height: 12),
               Text(
                 _error ?? "Could not load this Participant profile.",
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.red),
+                style: const TextStyle(color: AppTheme.error),
               ),
               const SizedBox(height: 16),
               ElevatedButton(onPressed: _load, child: const Text("Retry")),
@@ -463,7 +465,7 @@ class _ParticipantProfileScreenState extends State<ParticipantProfileScreen> {
                     icon: const Icon(Icons.edit),
                     label: const Text("Edit Participant"),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1F3D73),
+                      backgroundColor: AppTheme.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
