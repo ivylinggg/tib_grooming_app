@@ -1,7 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-import '../core/theme/app_theme.dart';
+import '../../core/theme/app_theme.dart';
+
 
 import '../../models/overall_result.dart';
 import '../../services/firebase_service.dart';
@@ -45,12 +46,12 @@ class AssessmentHistoryScreen extends StatelessWidget {
     final firebaseService = FirebaseService();
 
     return Scaffold(
-      backgroundColor: const AppTheme.background,
+      backgroundColor: AppTheme.background,
 
       appBar: AppBar(
         elevation: 0,
         centerTitle: true,
-        backgroundColor: const AppTheme.primary,
+        backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
         title: const Text(
           "Assessment History",
@@ -191,7 +192,7 @@ class AssessmentHistoryScreen extends StatelessWidget {
                               children: [
                                 CircleAvatar(
                                   radius: 22,
-                                  backgroundColor: const AppTheme.primary,
+                                  backgroundColor: AppTheme.primary,
 
                                   child: const Icon(
                                     Icons.assignment,
@@ -288,7 +289,7 @@ class AssessmentHistoryScreen extends StatelessWidget {
                                     label: const Text("Details"),
 
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const AppTheme.primary,
+                                      backgroundColor: AppTheme.primary,
                                       foregroundColor: Colors.white,
                                     ),
 
