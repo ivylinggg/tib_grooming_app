@@ -70,7 +70,7 @@ class TrainingHistoryDetailScreen extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 15,
                   height: 1.55,
-                  color: Colors.black87,
+                  color: AppTheme.text,
                 ),
               ),
             ),
@@ -83,7 +83,7 @@ class TrainingHistoryDetailScreen extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 15,
                   height: 1.55,
-                  color: Colors.black87,
+                  color: AppTheme.text,
                 ),
               ),
             ),
@@ -96,7 +96,7 @@ class TrainingHistoryDetailScreen extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 15,
                   height: 1.55,
-                  color: Colors.black87,
+                  color: AppTheme.text,
                 ),
               ),
             ),
@@ -328,12 +328,12 @@ class _PhotoTile extends StatelessWidget {
             width: double.infinity,
             fit: BoxFit.contain,
             errorBuilder: (context, error, stackTrace) => const ColoredBox(
-              color: Color(0xFFEDEDED),
+              color: AppTheme.mutedSurface,
               child: Center(
                 child: Icon(
                   Icons.broken_image_outlined,
                   size: 30,
-                  color: Colors.black45,
+                  color: AppTheme.textMuted.withValues(alpha: 0.75),
                 ),
               ),
             ),
@@ -341,7 +341,7 @@ class _PhotoTile extends StatelessWidget {
               if (progress == null) return child;
 
               return const ColoredBox(
-                color: Color(0xFFF3F3F3),
+                color: AppTheme.background,
                 child: Center(
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
@@ -362,9 +362,9 @@ class _FullScreenPhotoViewer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppTheme.text,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: AppTheme.text,
         foregroundColor: Colors.white,
         title: const Text('Training Photo'),
       ),
