@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
+
 import '../../models/app_user.dart';
 import '../../models/overall_result.dart';
 import '../../services/auth_service.dart';
@@ -89,13 +91,13 @@ class _AssessmentManagementScreenState
   Color _resultColor(String result) {
     switch (OverallResult.classify(result)) {
       case OverallResult.excellent:
-        return Colors.green;
+        return AppTheme.primary;
       case OverallResult.good:
-        return Colors.blue;
+        return AppTheme.primary;
       case OverallResult.needsWork:
-        return Colors.orange;
+        return AppTheme.warning;
       case OverallResult.insufficient:
-        return Colors.red;
+        return AppTheme.secondary;
     }
   }
 
@@ -184,16 +186,16 @@ class _AssessmentManagementScreenState
   Widget build(BuildContext context) {
     if (_checkingAccess) {
       return const Scaffold(
-        backgroundColor: Color(0xFFF5F7FA),
+        backgroundColor: AppTheme.background,
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text("Assessment Management"),
-        backgroundColor: const Color(0xFF1F3D73),
+        backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
       ),
       body: Column(
@@ -209,7 +211,7 @@ class _AssessmentManagementScreenState
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(18),
                   borderSide: BorderSide.none,
                 ),
               ),
@@ -231,7 +233,7 @@ class _AssessmentManagementScreenState
                         horizontal: 12,
                       ),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(18),
                       ),
                     ),
                     items: _statusOptions
@@ -286,7 +288,7 @@ class _AssessmentManagementScreenState
                       child: Text(
                         "Could not load assessments.\n${snapshot.error}",
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(color: AppTheme.secondary),
                       ),
                     ),
                   );
@@ -298,7 +300,7 @@ class _AssessmentManagementScreenState
                   return const Center(
                     child: Text(
                       "No assessment records yet",
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                      style: TextStyle(fontSize: 16, color: AppTheme.textMuted),
                     ),
                   );
                 }
@@ -309,7 +311,7 @@ class _AssessmentManagementScreenState
                   return const Center(
                     child: Text(
                       "No assessments match your search/filter",
-                      style: TextStyle(fontSize: 15, color: Colors.grey),
+                      style: TextStyle(fontSize: 15, color: AppTheme.textMuted),
                     ),
                   );
                 }
@@ -329,13 +331,13 @@ class _AssessmentManagementScreenState
 
                     return Card(
                       margin: const EdgeInsets.only(bottom: 12),
-                      elevation: 2,
+                      elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(18),
                       ),
                       child: ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: const Color(0xFF1F3D73),
+                          backgroundColor: AppTheme.primary,
                           child: Text(
                             name.isNotEmpty ? name[0].toUpperCase() : "?",
                             style: const TextStyle(color: Colors.white),

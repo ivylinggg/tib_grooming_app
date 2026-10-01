@@ -74,7 +74,7 @@ class _SplashScreenState extends State<SplashScreen>
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF234A84), Color(0xFF1F3D73), Color(0xFF17305D)],
+            colors: [AppTheme.primary, AppTheme.primary, AppTheme.primary],
           ),
         ),
 
@@ -99,7 +99,7 @@ class _SplashScreenState extends State<SplashScreen>
 
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.15),
+                            color: AppTheme.text.withValues(alpha: 0.15),
                             blurRadius: 25,
                             offset: const Offset(0, 10),
                           ),

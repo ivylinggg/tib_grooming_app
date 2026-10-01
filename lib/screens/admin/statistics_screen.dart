@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
+
 import '../../models/app_user.dart';
 import '../../models/overall_result.dart';
 import '../../services/auth_service.dart';
@@ -166,13 +168,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   Color _resultColor(String label) {
     switch (label) {
       case "Excellent":
-        return Colors.green;
+        return AppTheme.success;
       case "Good":
-        return Colors.blue;
+        return AppTheme.primary;
       case "Needs Work":
-        return Colors.orange;
+        return AppTheme.warning;
       default:
-        return Colors.red;
+        return AppTheme.error;
     }
   }
 
@@ -180,16 +182,16 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   Widget build(BuildContext context) {
     if (_checkingAccess) {
       return const Scaffold(
-        backgroundColor: Color(0xFFF5F7FA),
+        backgroundColor: AppTheme.background,
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text("Statistics"),
-        backgroundColor: const Color(0xFF1F3D73),
+        backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
       ),
       body: _buildBody(),
@@ -208,12 +210,12 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const Icon(Icons.error_outline, size: 48, color: AppTheme.error),
               const SizedBox(height: 12),
               Text(
                 _error!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.red),
+                style: const TextStyle(color: AppTheme.error),
               ),
               const SizedBox(height: 16),
               ElevatedButton(onPressed: _loadStats, child: const Text("Retry")),
@@ -302,7 +304,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             Card(
               elevation: 2,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(18),
@@ -321,7 +323,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           "${(completionRate * 100).toStringAsFixed(0)}%",
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1F3D73),
+                            color: AppTheme.primary,
                           ),
                         ),
                       ],
@@ -332,15 +334,15 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       child: LinearProgressIndicator(
                         value: completionRate,
                         minHeight: 12,
-                        backgroundColor: Colors.grey.shade200,
-                        color: const Color(0xFF1F3D73),
+                        backgroundColor: AppTheme.border,
+                        color: AppTheme.primary,
                       ),
                     ),
                     const SizedBox(height: 10),
                     Text(
                       "$_pending Participant(s) still pending their first "
                       "assessment.",
-                      style: const TextStyle(color: Colors.grey, fontSize: 13),
+                      style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
                     ),
                   ],
                 ),
@@ -358,7 +360,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             Card(
               elevation: 2,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(18),
@@ -368,7 +370,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                         child: Center(
                           child: Text(
                             "No assessment records yet",
-                            style: TextStyle(color: Colors.grey),
+                            style: TextStyle(color: AppTheme.textMuted),
                           ),
                         ),
                       )
@@ -412,7 +414,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                           height: 10,
                                           width: constraints.maxWidth,
                                           decoration: BoxDecoration(
-                                            color: Colors.grey.shade200,
+                                            color: AppTheme.border,
                                             borderRadius: BorderRadius.circular(
                                               6,
                                             ),
@@ -464,14 +466,14 @@ class _StatCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8)],
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [BoxShadow(color: AppTheme.border.withValues(alpha: 0.35), blurRadius: 8)],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: const Color(0xFF1F3D73), size: 24),
+          Icon(icon, color: AppTheme.primary, size: 24),
           const SizedBox(height: 8),
           Text(
             value,
@@ -482,7 +484,7 @@ class _StatCard extends StatelessWidget {
             label,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: Colors.grey, fontSize: 12),
+            style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
           ),
         ],
       ),

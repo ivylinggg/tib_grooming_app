@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../core/theme/app_theme.dart';
+
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -16,33 +19,55 @@ class ResultScreen extends StatelessWidget {
   Color get resultColor {
     switch (OverallResult.classify(result.overall)) {
       case OverallResult.excellent:
-        return Colors.green;
+        return AppTheme.primary;
       case OverallResult.good:
-        return Colors.blue;
+        return AppTheme.primary;
       case OverallResult.needsWork:
-        return Colors.orange;
+        return AppTheme.primary;
       case OverallResult.insufficient:
-        return Colors.red;
+        return AppTheme.primary;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Assessment Result"), centerTitle: true),
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(
+        title: const Text("Assessment Result"),
+        centerTitle: true,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.verified, color: Colors.green, size: 80),
+            Center(
+              child: Container(
+                width: 84,
+                height: 84,
+                decoration: BoxDecoration(
+                  color: AppTheme.mutedSurface,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.verified_rounded,
+                  color: AppTheme.primary,
+                  size: 46,
+                ),
+              ),
+            ),
 
             const SizedBox(height: 20),
 
             const Text(
               "Assessment Completed",
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.text,
+              ),
             ),
 
             const SizedBox(height: 30),
@@ -72,7 +97,13 @@ class ResultScreen extends StatelessWidget {
 
             Card(
               color: resultColor.withValues(alpha: 0.08),
-              elevation: 2,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+                side: BorderSide(
+                  color: resultColor.withValues(alpha: 0.22),
+                ),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(18),
                 child: Column(
@@ -101,7 +132,11 @@ class ResultScreen extends StatelessWidget {
 
             const Text(
               "AI Summary",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 19,
+                color: AppTheme.text,
+              ),
             ),
 
             const SizedBox(height: 10),
@@ -117,7 +152,11 @@ class ResultScreen extends StatelessWidget {
 
             const Text(
               "Assessment Criteria",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 19,
+                color: AppTheme.text,
+              ),
             ),
 
             const SizedBox(height: 12),
@@ -125,8 +164,17 @@ class ResultScreen extends StatelessWidget {
             ...result.criteria.map(
               (c) => Card(
                 child: ListTile(
-                  leading: CircleAvatar(child: Text(c.score.toString())),
-                  title: Text(c.label),
+                  leading: const CircleAvatar(
+                    backgroundColor: AppTheme.mutedSurface,
+                    child: Icon(
+                      Icons.check_circle_outline,
+                      color: AppTheme.primary,
+                    ),
+                  ),
+                  title: Text(
+                    c.label,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   subtitle: Text(c.tip),
                 ),
               ),
@@ -163,7 +211,7 @@ class ResultScreen extends StatelessWidget {
               const SizedBox(height: 12),
             ],
 
-            ElevatedButton.icon(
+            FilledButton.icon(
               icon: const Icon(Icons.dashboard_outlined),
               label: const Text("Continue to Staff Dashboard"),
               onPressed: () async {
@@ -181,7 +229,7 @@ class ResultScreen extends StatelessWidget {
                   messenger.showSnackBar(
                     const SnackBar(
                       content: Text("Sign in as Staff to view your dashboard."),
-                      backgroundColor: Colors.red,
+                      backgroundColor: AppTheme.primary,
                     ),
                   );
                   return;

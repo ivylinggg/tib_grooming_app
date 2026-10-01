@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
+
 import '../../widgets/checkin_card.dart';
 import '../../widgets/hero_banner.dart';
 import '../../widgets/top_navigation.dart';
@@ -7,12 +9,10 @@ import '../../widgets/top_navigation.dart';
 class CheckInScreen extends StatelessWidget {
   const CheckInScreen({super.key});
 
-  static const Color backgroundColor = Color(0xFFF8F6F1);
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: AppTheme.background,
       body: const SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.only(bottom: 40),
@@ -21,7 +21,7 @@ class CheckInScreen extends StatelessWidget {
             children: [
               TopNavigation(isRegister: false),
 
-              SizedBox(height: 16),
+              SizedBox(height: 20),
 
               HeroBanner(
                 badge: "DAILY GROOMING CHECK-IN",
@@ -31,14 +31,14 @@ class CheckInScreen extends StatelessWidget {
                     "Enter your Staff ID to retrieve your profile before completing today's grooming assessment.",
               ),
 
-              SizedBox(height: 24),
+              SizedBox(height: 28),
 
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24),
+                padding: EdgeInsets.symmetric(horizontal: 20),
                 child: CheckInCard(),
               ),
 
-              SizedBox(height: 32),
+              SizedBox(height: 40),
             ],
           ),
         ),

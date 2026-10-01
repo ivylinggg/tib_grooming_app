@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
+
 import '../../models/app_user.dart';
 import '../../models/overall_result.dart';
 import '../../models/participant.dart';
@@ -119,13 +121,13 @@ class _ParticipantProfileScreenState extends State<ParticipantProfileScreen> {
   Color _resultColor(String result) {
     switch (OverallResult.classify(result)) {
       case OverallResult.excellent:
-        return Colors.green;
+        return AppTheme.success;
       case OverallResult.good:
-        return Colors.blue;
+        return AppTheme.primary;
       case OverallResult.needsWork:
-        return Colors.orange;
+        return AppTheme.warning;
       case OverallResult.insufficient:
-        return Colors.red;
+        return AppTheme.error;
     }
   }
 
@@ -200,7 +202,7 @@ class _ParticipantProfileScreenState extends State<ParticipantProfileScreen> {
               ? "Participant updated successfully."
               : "Could not save changes.",
         ),
-        backgroundColor: success ? Colors.green : Colors.red,
+        backgroundColor: success ? AppTheme.success : AppTheme.error,
       ),
     );
 
@@ -213,16 +215,16 @@ class _ParticipantProfileScreenState extends State<ParticipantProfileScreen> {
   Widget build(BuildContext context) {
     if (_checkingAccess) {
       return const Scaffold(
-        backgroundColor: Color(0xFFF5F7FB),
+        backgroundColor: AppTheme.background,
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text("Participant Profile"),
-        backgroundColor: const Color(0xFF1F3D73),
+        backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
       ),
       body: _buildBody(),
@@ -241,12 +243,12 @@ class _ParticipantProfileScreenState extends State<ParticipantProfileScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const Icon(Icons.error_outline, size: 48, color: AppTheme.error),
               const SizedBox(height: 12),
               Text(
                 _error ?? "Could not load this Participant profile.",
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.red),
+                style: const TextStyle(color: AppTheme.error),
               ),
               const SizedBox(height: 16),
               ElevatedButton(onPressed: _load, child: const Text("Retry")),
@@ -271,7 +273,7 @@ class _ParticipantProfileScreenState extends State<ParticipantProfileScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
-              decoration: const BoxDecoration(color: Color(0xFF1F3D73)),
+              decoration: const BoxDecoration(color: AppTheme.primary),
               child: Column(
                 children: [
                   CircleAvatar(
@@ -284,7 +286,7 @@ class _ParticipantProfileScreenState extends State<ParticipantProfileScreen> {
                         ? const Icon(
                             Icons.person,
                             size: 40,
-                            color: Color(0xFF1F3D73),
+                            color: AppTheme.primary,
                           )
                         : null,
                   ),
@@ -391,7 +393,7 @@ class _ParticipantProfileScreenState extends State<ParticipantProfileScreen> {
                                       ? "No Assessment"
                                       : participant.latestResult,
                                   valueColor: participant.latestResult.isEmpty
-                                      ? Colors.grey
+                                      ? AppTheme.textMuted
                                       : _resultColor(participant.latestResult),
                                 ),
                               ),
@@ -419,17 +421,17 @@ class _ParticipantProfileScreenState extends State<ParticipantProfileScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.blueGrey.withValues(alpha: 0.06),
+                      color: AppTheme.textMuted.withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: Colors.blueGrey.withValues(alpha: 0.2),
+                        color: AppTheme.textMuted.withValues(alpha: 0.2),
                       ),
                     ),
                     child: Row(
                       children: [
                         const Icon(
                           Icons.badge_outlined,
-                          color: Colors.blueGrey,
+                          color: AppTheme.textMuted,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -439,7 +441,7 @@ class _ParticipantProfileScreenState extends State<ParticipantProfileScreen> {
                                       "${participant.createdByStaffId != null ? " (${participant.createdByStaffId})" : ""}"
                                 : "Registered by: Unknown / Not recorded",
                             style: const TextStyle(
-                              color: Colors.blueGrey,
+                              color: AppTheme.textMuted,
                               fontSize: 13,
                             ),
                           ),
@@ -463,7 +465,7 @@ class _ParticipantProfileScreenState extends State<ParticipantProfileScreen> {
                     icon: const Icon(Icons.edit),
                     label: const Text("Edit Participant"),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1F3D73),
+                      backgroundColor: AppTheme.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
@@ -496,7 +498,7 @@ class _InfoRow extends StatelessWidget {
             width: 100,
             child: Text(
               label,
-              style: const TextStyle(color: Colors.grey, fontSize: 13),
+              style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
             ),
           ),
           Expanded(
@@ -536,7 +538,7 @@ class _StatBox extends StatelessWidget {
         Text(
           label,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.grey, fontSize: 11),
+          style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
         ),
       ],
     );

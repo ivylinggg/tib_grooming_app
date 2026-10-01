@@ -2,8 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_theme.dart';
-
 import '../../models/app_user.dart';
 import '../../models/overall_result.dart';
 import '../../services/auth_service.dart';
@@ -86,6 +84,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _checkAdminAccess();
   }
 
+  /// Role-based route guard: signed out -> Login. Signed in but not
+  /// Admin (Staff, or a role-less/pending account) -> Role Selection,
+  /// same landing point every other non-Admin path already uses. Only
+  /// a confirmed `role: admin` account ever proceeds to load dashboard
+  /// data -- hiding admin-only buttons elsewhere is not enough on its
+  /// own, so this checks the actual stored role, not just "is someone
+  /// signed in".
   Future<void> _checkAdminAccess() async {
     if (FirebaseAuth.instance.currentUser == null) {
       if (!mounted) return;
@@ -127,6 +132,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _staffCountError = null;
     });
 
+    // Staff (Firebase Auth login accounts with role: staff, in
+    // `users/{uid}`) is queried separately from participants/assessments
+    // -- it's a genuinely different collection representing a different
+    // entity (see the class doc comment), not the same headcount under
+    // a different label, and a failure here shouldn't block the rest of
+    // the dashboard.
     try {
       final staffSnapshot = await FirebaseFirestore.instance
           .collection("users")
@@ -155,6 +166,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       totalParticipants = participantSnapshot.docs.length;
       totalAssessments = assessmentSnapshot.docs.length;
 
+      // A participant counts as "completed" once they have at least one
+      // saved assessment (assessmentCount, kept in sync by
+      // FirebaseService.saveAssessment on every successful save) --
+      // "pending" is everyone still waiting on their first one. This is
+      // real, derived data, not a status field that has to be invented.
       int completed = 0;
       for (final doc in participantSnapshot.docs) {
         final count = (doc.data()["assessmentCount"] ?? 0) as int;
@@ -169,9 +185,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         for (final doc in assessmentSnapshot.docs) {
           final data = doc.data();
+          // Matches the field name saveAssessment() actually writes.
           final score = (data["totalScore"] ?? 0) as int;
           totalScore += score;
 
+          // Same strictly-less-than rule FirebaseService._maybeNotify
+          // AdminOfFailure uses to decide whether to email Admin -- a
+          // score of exactly kFailingScoreThreshold is not a failure.
           if (score < kFailingScoreThreshold) failed++;
         }
 
@@ -210,6 +230,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final recentAssessments = await _firebaseService.getRecentAssessments(
         limit: 5,
       );
+
+      // Sorted client-side rather than adding `.orderBy("createdAt")`
+      // to AuthService.getAllStaff's `where("role", ...)` query --
+      // combining a where-filter with an orderBy on a *different*
+      // field requires a Firestore composite index that doesn't exist
+      // for this collection, which would fail at runtime instead of
+      // compile time. Sorting the already-fetched list avoids that.
       final allStaff = await _authService.getAllStaff();
       allStaff.sort((a, b) {
         final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
@@ -255,6 +282,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (confirmed != true || !mounted) return;
 
+    // Firebase Auth session only -- does not touch Firestore data or
+    // remembered "Remember me" credentials, same contract as
+    // TopNavigation's logout for the Staff side.
     await _authService.signOut();
 
     if (!mounted) return;
@@ -268,13 +298,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Color _resultColor(String result) {
     switch (OverallResult.classify(result)) {
       case OverallResult.excellent:
-        return AppTheme.success;
+        return Colors.green;
       case OverallResult.good:
-        return AppTheme.primary;
+        return Colors.blue;
       case OverallResult.needsWork:
-        return AppTheme.warning;
+        return Colors.orange;
       case OverallResult.insufficient:
-        return AppTheme.error;
+        return Colors.red;
     }
   }
 
@@ -293,56 +323,85 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     if (_checkingAccess) {
       return const Scaffold(
-        backgroundColor: AppTheme.background,
+        backgroundColor: Color(0xFFF8F6F1),
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: const Color(0xFFF8F6F1),
+
       appBar: AppBar(
-        title: const Text('Admin Dashboard'),
+        elevation: 0,
+        backgroundColor: const Color(0xFF1F3D73),
+        foregroundColor: Colors.white,
+        centerTitle: true,
+        title: const Text(
+          "Admin Dashboard",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         actions: [
           _NotificationBellAction(notificationService: _notificationService),
           IconButton(
-            tooltip: 'Switch Portal',
-            onPressed: _switchPortal,
+            tooltip: "Switch Portal",
+            onPressed: () async {
+              final appUser = await _authService.getCurrentAppUser();
+              if (!context.mounted) return;
+              if (appUser != null && appUser.roles.length > 1) {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (_) => MultiRoleDashboardScreen(appUser: appUser),
+                  ),
+                );
+              } else {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (_) => const TrainerDashboardScreen(),
+                  ),
+                );
+              }
+            },
             icon: const Icon(Icons.swap_horiz),
           ),
           IconButton(
-            tooltip: 'Sign Out',
             onPressed: _confirmLogout,
-            icon: const Icon(Icons.logout_outlined),
+            icon: const Icon(Icons.logout),
+            tooltip: "Logout",
           ),
         ],
       ),
+
       body: RefreshIndicator(
         onRefresh: loadDashboard,
+
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
+
           padding: const EdgeInsets.all(20),
+
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(25),
+
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppTheme.primary, AppTheme.primary],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(18),
+                  color: const Color(0xFF1F3D73),
+                  borderRadius: BorderRadius.circular(20),
                 ),
+
                 child: const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+
                   children: [
                     Text(
                       "Welcome Back",
                       style: TextStyle(color: Colors.white70, fontSize: 16),
                     ),
+
                     SizedBox(height: 10),
+
                     Text(
                       "Training Department",
                       style: TextStyle(
@@ -351,7 +410,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         fontSize: 28,
                       ),
                     ),
+
                     SizedBox(height: 10),
+
                     Text(
                       "Manage staff, AI grooming assessments and system records.",
                       style: TextStyle(color: Colors.white70, height: 1.5),
@@ -359,32 +420,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ],
                 ),
               ),
+
               const SizedBox(height: 25),
+
               const Text(
                 "Overview",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
+
               const SizedBox(height: 12),
+
               if (_statsError != null)
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
                   margin: const EdgeInsets.only(bottom: 15),
                   decoration: BoxDecoration(
-                    color: AppTheme.error.withValues(alpha: 0.08),
+                    color: Colors.red.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: AppTheme.error.withValues(alpha: 0.3),
+                      color: Colors.red.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline, color: AppTheme.error),
+                      const Icon(Icons.error_outline, color: Colors.red),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           _statsError!,
-                          style: const TextStyle(color: AppTheme.error),
+                          style: const TextStyle(color: Colors.red),
                         ),
                       ),
                       TextButton(
@@ -394,23 +459,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
                   ),
                 ),
+
               if (_staffCountError != null)
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
                   margin: const EdgeInsets.only(bottom: 15),
                   decoration: BoxDecoration(
-                    color: AppTheme.warning.withValues(alpha: 0.08),
+                    color: Colors.orange.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: AppTheme.warning.withValues(alpha: 0.3),
+                      color: Colors.orange.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
                     children: [
                       const Icon(
                         Icons.warning_amber_outlined,
-                        color: AppTheme.warning,
+                        color: Colors.orange,
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -418,7 +484,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           "${_staffCountError!} This may mean Firestore "
                           "security rules don't allow Admin to read the "
                           "users collection yet.",
-                          style: const TextStyle(color: AppTheme.warning),
+                          style: const TextStyle(color: Colors.orange),
                         ),
                       ),
                       TextButton(
@@ -428,6 +494,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
                   ),
                 ),
+
               if (_loadingStats && _statsError == null)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 40),
@@ -453,7 +520,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 15),
+
                 Row(
                   children: [
                     Expanded(
@@ -473,7 +542,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 15),
+
                 Row(
                   children: [
                     Expanded(
@@ -493,20 +564,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 15),
+
+                // A failed assessment (totalScore < kFailingScoreThreshold)
+                // already triggers an automatic email to every Admin
+                // account (see FirebaseService._maybeNotifyAdminOfFailure)
+                // -- this card is the equivalent at-a-glance summary on
+                // the dashboard itself, not a separate feature. Full
+                // width, not paired into a two-column Row like the cards
+                // above: there's only one new metric here, and it's the
+                // one meant to draw the eye rather than blend in.
                 _OverviewCard(
                   title: "Failed Grooming Assessments",
                   value: "$failedAssessments",
                   icon: Icons.warning_amber_rounded,
-                  iconColor: AppTheme.error,
+                  iconColor: Colors.red,
                 ),
               ],
+
               const SizedBox(height: 30),
+
               const Text(
                 "Management",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
+
               const SizedBox(height: 12),
+
               _DashboardButton(
                 icon: Icons.person_add_alt,
                 title: "Register Participant",
@@ -516,10 +601,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     context,
                     MaterialPageRoute(builder: (_) => const RegisterScreen()),
                   );
-                  if (!context.mounted) return;
+
                   loadDashboard();
                 },
               ),
+
               _DashboardButton(
                 icon: Icons.badge,
                 title: "Staff Management",
@@ -531,10 +617,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       builder: (_) => const StaffManagementScreen(),
                     ),
                   );
-                  if (!context.mounted) return;
+
                   loadDashboard();
                 },
               ),
+
               _DashboardButton(
                 icon: Icons.groups,
                 title: "Participant Management",
@@ -546,10 +633,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       builder: (_) => const ParticipantManagementScreen(),
                     ),
                   );
-                  if (!context.mounted) return;
+
                   loadDashboard();
                 },
               ),
+
               _DashboardButton(
                 icon: Icons.assignment_outlined,
                 title: "Assessment Management",
@@ -561,10 +649,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       builder: (_) => const AssessmentManagementScreen(),
                     ),
                   );
-                  if (!context.mounted) return;
+
                   loadDashboard();
                 },
               ),
+
               _DashboardButton(
                 icon: Icons.bar_chart,
                 title: "Statistics",
@@ -576,6 +665,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   );
                 },
               ),
+
               _DashboardButton(
                 icon: Icons.history_edu_outlined,
                 title: "Training History",
@@ -590,12 +680,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   );
                 },
               ),
+
               const SizedBox(height: 30),
+
               const Text(
                 "Recent Activity",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
+
               const SizedBox(height: 12),
+
               if (_loadingActivity)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 30),
@@ -614,7 +708,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: const CircleAvatar(
-                        backgroundColor: AppTheme.primaryDark,
+                        backgroundColor: Color(0xFF1F3D73),
                         child: Icon(
                           Icons.person,
                           color: Colors.white,
@@ -635,7 +729,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     );
                   }).toList(),
                 ),
+
                 const SizedBox(height: 16),
+
                 _RecentActivitySection(
                   title: "Recent Grooming Assessments",
                   icon: Icons.fact_check,
@@ -674,7 +770,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     );
                   }).toList(),
                 ),
+
                 const SizedBox(height: 16),
+
                 _RecentActivitySection(
                   title: "Recent Staff Accounts",
                   icon: Icons.badge,
@@ -684,7 +782,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: const CircleAvatar(
-                        backgroundColor: AppTheme.primaryDark,
+                        backgroundColor: Color(0xFF1F3D73),
                         child: Icon(Icons.badge, color: Colors.white, size: 18),
                       ),
                       title: Text(staff.displayName),
@@ -710,27 +808,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
-
-  Future<void> _switchPortal() async {
-    final appUser = await _authService.getCurrentAppUser();
-    if (!mounted) return;
-
-    if (appUser != null && appUser.roles.length > 1) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => MultiRoleDashboardScreen(appUser: appUser),
-        ),
-      );
-    } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => const TrainerDashboardScreen(),
-        ),
-      );
-    }
-  }
 }
 
+/// AppBar bell icon with a live unread-count badge -- opens
+/// NotificationsScreen. Reads [FirebaseAuth.instance.currentUser]
+/// itself (rather than taking it as a parameter) since it needs the
+/// real signed-in uid to know whose [AdminNotification.readBy] entry
+/// counts as "unread"; renders as a plain, badge-less bell if somehow
+/// nobody is signed in (DashboardScreen's own _checkAdminAccess already
+/// guarantees that can't happen on this screen, but this widget doesn't
+/// assume its caller enforced that).
 class _NotificationBellAction extends StatelessWidget {
   final NotificationService notificationService;
 
@@ -768,17 +855,28 @@ class _NotificationBellAction extends StatelessWidget {
   }
 }
 
+/// Never gives itself a fixed height -- the previous version's fixed
+/// `height: 135` was the exact cause of the "BOTTOM OVERFLOWED" errors:
+/// any title long enough to wrap to two lines, or any device text-scale
+/// setting above 1.0x, pushed content past that fixed box. Sizing to
+/// content with `mainAxisSize: MainAxisSize.min` instead means the card
+/// grows with its content and can never overflow itself.
 class _OverviewCard extends StatelessWidget {
   final String title;
   final String value;
   final IconData icon;
+
+  /// Defaults to the existing brand blue every card already used --
+  /// only the new "Failed Grooming Assessments" card passes red, to
+  /// stand out as the one metric here that needs attention rather than
+  /// just informs.
   final Color iconColor;
 
   const _OverviewCard({
     required this.title,
     required this.value,
     required this.icon,
-    this.iconColor = AppTheme.primary,
+    this.iconColor = const Color(0xFF1F3D73),
   });
 
   @override
@@ -788,32 +886,28 @@ class _OverviewCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.border),
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8)],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: iconColor, size: 22),
-          ),
+          Icon(icon, color: iconColor, size: 28),
+
           const SizedBox(height: 12),
+
           Text(
             value,
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
           ),
+
           const SizedBox(height: 4),
+
           Text(
             title,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
+            style: const TextStyle(color: Colors.black54, fontSize: 13),
           ),
         ],
       ),
@@ -837,17 +931,21 @@ class _DashboardButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 15),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: AppTheme.primaryDark,
+          backgroundColor: const Color(0xFF1F3D73),
           child: Icon(icon, color: Colors.white),
         ),
+
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+
         subtitle: Text(subtitle),
-        trailing: const Icon(Icons.chevron_right_rounded, size: 21),
+
+        trailing: const Icon(Icons.arrow_forward_ios, size: 18),
+
         onTap: onTap,
       ),
     );
@@ -872,11 +970,8 @@ class _RecentActivitySection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: const BorderSide(color: AppTheme.border),
-      ),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -884,7 +979,7 @@ class _RecentActivitySection extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(icon, color: AppTheme.primary, size: 20),
+                Icon(icon, color: const Color(0xFF1F3D73), size: 20),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -900,7 +995,7 @@ class _RecentActivitySection extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(
                   emptyText,
-                  style: const TextStyle(color: AppTheme.textMuted),
+                  style: const TextStyle(color: Colors.grey),
                 ),
               )
             else

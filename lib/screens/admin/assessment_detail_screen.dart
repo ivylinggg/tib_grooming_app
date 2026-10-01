@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
+import '../../core/theme/app_theme.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../config/hosting_config.dart';
@@ -244,7 +246,7 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
                   ? "PDF saved successfully to:\n${result.savedPath}"
                   : "PDF saved successfully.",
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.success,
           ),
         );
       }
@@ -254,7 +256,7 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text("Could not export PDF: $e"),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
     } finally {
@@ -301,7 +303,7 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
                   ? "PDF downloaded successfully to:\n${result.savedPath}"
                   : "PDF downloaded successfully.",
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.success,
           ),
         );
       }
@@ -311,7 +313,7 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text("Could not download PDF: $e"),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
     } finally {
@@ -369,7 +371,7 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text("Could not create share link: $e"),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
     } finally {
@@ -412,7 +414,7 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text("Could not disable sharing: $e"),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
     } finally {
@@ -427,13 +429,13 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
   Color _resultColor(String result) {
     switch (OverallResult.classify(result)) {
       case OverallResult.excellent:
-        return Colors.green;
+        return AppTheme.success;
       case OverallResult.good:
-        return Colors.blue;
+        return AppTheme.primary;
       case OverallResult.needsWork:
-        return Colors.orange;
+        return AppTheme.warning;
       case OverallResult.insufficient:
-        return Colors.red;
+        return AppTheme.error;
     }
   }
 
@@ -459,7 +461,7 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppTheme.error,
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.pop(dialogContext, true),
@@ -489,16 +491,16 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
   Widget build(BuildContext context) {
     if (_checkingAccess) {
       return const Scaffold(
-        backgroundColor: Color(0xFFF5F7FB),
+        backgroundColor: AppTheme.background,
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text("Assessment Details"),
-        backgroundColor: const Color(0xFF1F3D73),
+        backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
         actions: [
           if (_isAdmin && _assessment != null)
@@ -525,12 +527,12 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const Icon(Icons.error_outline, size: 48, color: AppTheme.error),
               const SizedBox(height: 12),
               Text(
                 _error ?? "Could not load this assessment.",
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.red),
+                style: const TextStyle(color: AppTheme.error),
               ),
               const SizedBox(height: 16),
               ElevatedButton(onPressed: _load, child: const Text("Retry")),
@@ -661,7 +663,7 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
                 ),
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: const Color(0xFF1F3D73),
+                    backgroundColor: AppTheme.primary,
                     child: Text(
                       criterionScore,
                       style: const TextStyle(color: Colors.white),
@@ -738,7 +740,7 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
                 : const Icon(Icons.picture_as_pdf_outlined),
             label: Text(_exportingPdf ? "Generating PDF..." : "Export PDF"),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1F3D73),
+              backgroundColor: AppTheme.primary,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
@@ -784,10 +786,10 @@ class _AssessmentDetailScreenState extends State<AssessmentDetailScreen> {
             const SizedBox(height: 8),
             TextButton.icon(
               onPressed: _sharingBusy ? null : _disableSharing,
-              icon: const Icon(Icons.link_off, color: Colors.red, size: 18),
+              icon: const Icon(Icons.link_off, color: AppTheme.error, size: 18),
               label: const Text(
                 "Disable Sharing",
-                style: TextStyle(color: Colors.red),
+                style: TextStyle(color: AppTheme.error),
               ),
             ),
           ],
@@ -821,7 +823,7 @@ class _PhotoCard extends StatelessWidget {
               url,
               fit: BoxFit.cover,
               errorBuilder: (_, _, _) => Container(
-                color: Colors.grey.shade200,
+                color: AppTheme.border,
                 alignment: Alignment.center,
                 child: const Icon(Icons.broken_image_outlined),
               ),

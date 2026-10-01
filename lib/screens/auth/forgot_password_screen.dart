@@ -35,7 +35,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Please enter your email address."),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
       return;
@@ -66,7 +66,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(describeAuthError(e)),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
     } catch (e) {
@@ -79,7 +79,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       messenger.showSnackBar(
         const SnackBar(
           content: Text("Could not send reset email."),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
     }
@@ -115,7 +115,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   "Check ${emailController.text.trim()} for a link to "
                   "reset your password.",
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.black54),
+                  style: const TextStyle(color: AppTheme.textMuted),
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
@@ -126,7 +126,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 const Text(
                   "Enter the email address associated with your account "
                   "and we'll send you a link to reset your password.",
-                  style: TextStyle(color: Colors.black54),
+                  style: TextStyle(color: AppTheme.textMuted),
                 ),
                 const SizedBox(height: 24),
 

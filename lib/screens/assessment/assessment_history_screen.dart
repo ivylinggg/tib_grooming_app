@@ -1,6 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
+
+
 import '../../models/overall_result.dart';
 import '../../services/firebase_service.dart';
 
@@ -17,16 +20,16 @@ class AssessmentHistoryScreen extends StatelessWidget {
   Color _resultColor(String result) {
     switch (OverallResult.classify(result)) {
       case OverallResult.excellent:
-        return Colors.green;
+        return AppTheme.primary;
 
       case OverallResult.good:
-        return Colors.blue;
+        return AppTheme.primary;
 
       case OverallResult.needsWork:
-        return Colors.orange;
+        return AppTheme.primary;
 
       case OverallResult.insufficient:
-        return Colors.red;
+        return AppTheme.primary;
     }
   }
 
@@ -43,12 +46,12 @@ class AssessmentHistoryScreen extends StatelessWidget {
     final firebaseService = FirebaseService();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: AppTheme.background,
 
       appBar: AppBar(
         elevation: 0,
         centerTitle: true,
-        backgroundColor: const Color(0xFF1F3D73),
+        backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
         title: const Text(
           "Assessment History",
@@ -61,14 +64,14 @@ class AssessmentHistoryScreen extends StatelessWidget {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(color: Color(0xFF1F3D73)),
+            decoration: const BoxDecoration(color: AppTheme.primary),
 
             child: Column(
               children: [
                 const CircleAvatar(
                   radius: 40,
                   backgroundColor: Colors.white,
-                  child: Icon(Icons.person, size: 42, color: Color(0xFF1F3D73)),
+                  child: Icon(Icons.person, size: 42, color: AppTheme.primary),
                 ),
 
                 const SizedBox(height: 15),
@@ -118,14 +121,14 @@ class AssessmentHistoryScreen extends StatelessWidget {
                           Icon(
                             Icons.error_outline,
                             size: 48,
-                            color: Colors.red,
+                            color: AppTheme.primary,
                           ),
                           SizedBox(height: 12),
                           Text(
                             "Could not load assessment history right now. "
                             "Please try again later.",
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.red),
+                            style: TextStyle(color: AppTheme.primary),
                           ),
                         ],
                       ),
@@ -189,7 +192,7 @@ class AssessmentHistoryScreen extends StatelessWidget {
                               children: [
                                 CircleAvatar(
                                   radius: 22,
-                                  backgroundColor: const Color(0xFF1F3D73),
+                                  backgroundColor: AppTheme.primary,
 
                                   child: const Icon(
                                     Icons.assignment,
@@ -217,7 +220,7 @@ class AssessmentHistoryScreen extends StatelessWidget {
 
                                       const Text(
                                         "Assessment Record",
-                                        style: TextStyle(color: Colors.grey),
+                                        style: TextStyle(color: AppTheme.textMuted),
                                       ),
                                     ],
                                   ),
@@ -286,7 +289,7 @@ class AssessmentHistoryScreen extends StatelessWidget {
                                     label: const Text("Details"),
 
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF1F3D73),
+                                      backgroundColor: AppTheme.primary,
                                       foregroundColor: Colors.white,
                                     ),
 
@@ -385,7 +388,7 @@ class AssessmentHistoryScreen extends StatelessWidget {
                                     label: const Text("Delete"),
 
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red,
+                                      backgroundColor: AppTheme.primary,
                                       foregroundColor: Colors.white,
                                     ),
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/theme/app_theme.dart';
 
 class HeroBanner extends StatelessWidget {
   final String badge;
@@ -18,89 +19,88 @@ class HeroBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 20),
-      decoration: const BoxDecoration(color: Color(0xFF1F3D73)),
+      padding: const EdgeInsets.fromLTRB(22, 24, 22, 24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppTheme.primary, AppTheme.primaryDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(28),
+          bottomRight: Radius.circular(28),
+        ),
+      ),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Background Circle
           Positioned(
-            top: -60,
-            right: -80,
+            top: -55,
+            right: -55,
             child: Container(
-              width: 220,
-              height: 220,
+              width: 150,
+              height: 150,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.08),
+                color: Colors.white.withValues(alpha: 0.06),
                 shape: BoxShape.circle,
               ),
             ),
           ),
-
           Column(
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Badge
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 8,
-                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: const Color(0xFFE5C27A)),
+                  color: AppTheme.accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: AppTheme.accent.withValues(alpha: 0.35),
+                  ),
                 ),
                 child: Text(
                   badge.toUpperCase(),
                   style: const TextStyle(
-                    color: Color(0xFFE5C27A),
-                    fontSize: 14,
-                    letterSpacing: 2,
-                    fontWeight: FontWeight.w600,
+                    color: AppTheme.accent,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.5,
                   ),
                 ),
               ),
-
-              const SizedBox(height: 28),
-
-              // Title
+              const SizedBox(height: 14),
               RichText(
-                textAlign: TextAlign.center,
                 text: TextSpan(
-                  style: const TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                  ),
                   children: [
                     TextSpan(
-                      text: "$title ",
-                      style: const TextStyle(color: Colors.white),
+                      text: '$title ',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 27,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                      ),
                     ),
                     TextSpan(
                       text: highlight,
                       style: const TextStyle(
-                        color: Color(0xFFE5C27A),
-                        fontStyle: FontStyle.italic,
+                        color: AppTheme.accent,
+                        fontSize: 27,
                         fontWeight: FontWeight.w500,
+                        height: 1.2,
                       ),
                     ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 20),
-
-              // Description
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 650),
-                child: Text(
-                  description,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 16,
-                    height: 1.6,
-                  ),
+              const SizedBox(height: 9),
+              Text(
+                description,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 13,
+                  height: 1.5,
                 ),
               ),
             ],

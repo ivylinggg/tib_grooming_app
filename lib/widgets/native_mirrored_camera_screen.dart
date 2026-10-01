@@ -5,6 +5,8 @@ import 'dart:math' as math;
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_theme.dart';
+
 import '../models/captured_image.dart';
 
 /// Every way [pushNativeMirroredCamera] can conclude -- same typed-result
@@ -202,7 +204,7 @@ class _NativeMirroredCameraScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Could not capture the photo. Please try again."),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.primary,
         ),
       );
     }
@@ -219,7 +221,7 @@ class _NativeMirroredCameraScreenState
     final controller = _controller;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppTheme.primaryDark,
       body: SafeArea(
         child: Stack(
           children: [
@@ -270,7 +272,7 @@ class _NativeMirroredCameraScreenState
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: Colors.white,
-                        border: Border.all(color: Colors.black26, width: 3),
+                        border: Border.all(color: AppTheme.primaryDark.withValues(alpha: 0.26), width: 3),
                       ),
                       child: _capturing
                           ? const Padding(

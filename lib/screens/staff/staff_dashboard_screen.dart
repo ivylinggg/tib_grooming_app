@@ -158,9 +158,28 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
 
               const SizedBox(height: 28),
 
-              const Text(
-                "Latest Grooming Result",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: AppTheme.secondary,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      "Latest Grooming Result",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 18,
+                        color: AppTheme.text,
+                      ),
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 12),
@@ -185,10 +204,13 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
 
               const SizedBox(height: 24),
 
-              ElevatedButton.icon(
-                onPressed: () => _startNewCheckIn(context),
-                icon: const Icon(Icons.qr_code_scanner),
-                label: const Text("Start New Check-In"),
+              SizedBox(
+                height: 52,
+                child: FilledButton.icon(
+                  onPressed: () => _startNewCheckIn(context),
+                  icon: const Icon(Icons.qr_code_scanner_outlined),
+                  label: const Text("Start New Check-In"),
+                ),
               ),
             ],
           ),
@@ -201,50 +223,111 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
     final photoUrl = _participant?.photoUrl ?? "";
     final trainerName = _participant?.trainerName ?? "";
 
-    return Column(
-      children: [
-        if (!_loadingParticipant && photoUrl.isNotEmpty)
-          ClipOval(
-            child: Image.network(
-              photoUrl,
-              width: 88,
-              height: 88,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => const Icon(
-                Icons.badge_outlined,
-                size: 64,
-                color: AppTheme.primary,
-              ),
-            ),
-          )
-        else
-          const Icon(Icons.badge_outlined, size: 64, color: AppTheme.primary),
-
-        const SizedBox(height: 16),
-
-        Text(
-          "Welcome, ${widget.user.displayName}",
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          textAlign: TextAlign.center,
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppTheme.primaryDark, AppTheme.primary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-
-        const SizedBox(height: 6),
-
-        Text(
-          hasStaffId ? "Staff ID: $staffId" : "Staff ID: Not registered",
-          style: const TextStyle(color: Colors.black54),
-          textAlign: TextAlign.center,
-        ),
-
-        if (!_loadingParticipant && trainerName.isNotEmpty) ...[
-          const SizedBox(height: 4),
-          Text(
-            "Trainer: $trainerName",
-            style: const TextStyle(color: Colors.black54),
-            textAlign: TextAlign.center,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryDark.withValues(alpha: 0.16),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
           ),
         ],
-      ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 76,
+            height: 76,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.14),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.55),
+                width: 2,
+              ),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: !_loadingParticipant && photoUrl.isNotEmpty
+                ? Image.network(
+                    photoUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => const Icon(
+                      Icons.badge_outlined,
+                      size: 38,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(
+                    Icons.badge_outlined,
+                    size: 38,
+                    color: Colors.white,
+                  ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Welcome back",
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.72),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  widget.user.displayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 7),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    hasStaffId ? "Staff ID: $staffId" : "Staff ID: Not registered",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                if (!_loadingParticipant && trainerName.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    "Trainer: $trainerName",
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.72),
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -288,9 +371,12 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
         final dateText = _formatDate(latest["createdAt"]);
 
         return Card(
-          elevation: 2,
+          elevation: 0,
+          margin: EdgeInsets.zero,
+          color: AppTheme.surface,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(18),
+            side: const BorderSide(color: AppTheme.border),
           ),
           child: Padding(
             padding: const EdgeInsets.all(18),
@@ -301,15 +387,48 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
                   "Overall Score: $totalScore/60",
                   style: const TextStyle(
                     fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.text,
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text("Result: $overall"),
+                Row(
+                  children: [
+                    const Text(
+                      "Result",
+                      style: TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.accent.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        overall,
+                        style: const TextStyle(
+                          color: AppTheme.primaryDark,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 6),
                 Text(
                   "Assessment Date: $dateText",
-                  style: const TextStyle(color: Colors.black54),
+                  style: const TextStyle(
+                    color: AppTheme.textMuted,
+                    fontSize: 12,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 Align(
@@ -337,17 +456,18 @@ class _EmptyResultCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 0,
-      color: Colors.white,
+      margin: EdgeInsets.zero,
+      color: AppTheme.mutedSurface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: Colors.black12),
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: AppTheme.border),
       ),
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Text(
           message,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.black54),
+          style: const TextStyle(color: AppTheme.textMuted),
         ),
       ),
     );

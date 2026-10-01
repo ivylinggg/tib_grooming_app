@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
+
 import '../../api/assessment_api.dart';
 import '../../models/app_user.dart';
 import '../../models/captured_image.dart';
@@ -108,7 +110,7 @@ class _ParticipantManagementScreenState
 
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: AppTheme.secondary,
                 foregroundColor: Colors.white,
               ),
               onPressed: () {
@@ -168,13 +170,13 @@ class _ParticipantManagementScreenState
   Widget build(BuildContext context) {
     if (_checkingAccess) {
       return const Scaffold(
-        backgroundColor: Color(0xFFF5F7FA),
+        backgroundColor: AppTheme.background,
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: AppTheme.background,
 
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -189,7 +191,7 @@ class _ParticipantManagementScreenState
             Text(
               "Participant Dashboard",
               style: TextStyle(
-                color: Color(0xFF1F3D73),
+                color: AppTheme.primary,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
@@ -197,7 +199,7 @@ class _ParticipantManagementScreenState
             SizedBox(height: 4),
             Text(
               "Manage registrations, assessments and participant records",
-              style: TextStyle(color: Colors.grey, fontSize: 13),
+              style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
             ),
           ],
         ),
@@ -207,7 +209,7 @@ class _ParticipantManagementScreenState
             margin: const EdgeInsets.only(right: 20),
             child: CircleAvatar(
               radius: 22,
-              backgroundColor: const Color(0xFF1F3D73),
+              backgroundColor: AppTheme.primary,
               child: const Icon(Icons.people_alt_rounded, color: Colors.white),
             ),
           ),
@@ -229,7 +231,7 @@ class _ParticipantManagementScreenState
                 fillColor: Colors.white,
 
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(18),
                 ),
 
                 suffixIcon: _keyword.isEmpty
@@ -296,11 +298,11 @@ class _ParticipantManagementScreenState
                       margin: const EdgeInsets.symmetric(horizontal: 5),
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.surface,
                         borderRadius: BorderRadius.circular(18),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
+                            color: AppTheme.primaryDark.withValues(alpha: 0.06),
                             blurRadius: 15,
                             offset: const Offset(0, 5),
                           ),
@@ -329,7 +331,7 @@ class _ParticipantManagementScreenState
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              color: Colors.grey,
+                              color: AppTheme.textMuted,
                               fontSize: 12,
                             ),
                           ),
@@ -345,24 +347,24 @@ class _ParticipantManagementScreenState
                       "Participants",
                       total.toString(),
                       Icons.people,
-                      Colors.blue,
+                      AppTheme.primary,
                     ),
 
                     card(
                       "Assessed",
                       assessed.toString(),
                       Icons.analytics,
-                      Colors.green,
+                      AppTheme.success,
                     ),
 
                     card(
                       "Pending",
                       pending.toString(),
                       Icons.schedule,
-                      Colors.orange,
+                      AppTheme.warning,
                     ),
 
-                    card("Today", today.toString(), Icons.today, Colors.purple),
+                    card("Today", today.toString(), Icons.today, AppTheme.primaryDark),
                   ],
                 );
               },
@@ -420,7 +422,7 @@ class _ParticipantManagementScreenState
                           borderRadius: BorderRadius.circular(22),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
+                              color: AppTheme.primaryDark.withValues(alpha: 0.06),
                               blurRadius: 15,
                               offset: const Offset(0, 6),
                             ),
@@ -554,7 +556,7 @@ class _ParticipantManagementScreenState
                                               maxLines: 1,
                                             ),
                                             style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.orange,
+                                              backgroundColor: AppTheme.warning,
                                               foregroundColor: Colors.white,
                                               padding:
                                                   const EdgeInsets.symmetric(
@@ -665,7 +667,7 @@ class _ParticipantManagementScreenState
                                                                               content: Text(
                                                                                 kFullBodyPhotoErrorMessage,
                                                                               ),
-                                                                              backgroundColor: Colors.red,
+                                                                              backgroundColor: AppTheme.error,
                                                                             ),
                                                                           );
                                                                         }
@@ -871,7 +873,7 @@ class _ParticipantManagementScreenState
                                               maxLines: 1,
                                             ),
                                             style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.green,
+                                              backgroundColor: AppTheme.success,
                                               foregroundColor: Colors.white,
                                               padding:
                                                   const EdgeInsets.symmetric(
@@ -915,7 +917,7 @@ class _ParticipantManagementScreenState
                                               maxLines: 1,
                                             ),
                                             style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.red,
+                                              backgroundColor: AppTheme.error,
                                               foregroundColor: Colors.white,
                                               padding:
                                                   const EdgeInsets.symmetric(
@@ -949,7 +951,7 @@ class _ParticipantManagementScreenState
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFF1F3D73),
+        backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.person_add),
         label: const Text("Register"),

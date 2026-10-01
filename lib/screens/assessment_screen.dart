@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../core/theme/app_theme.dart';
+
 import '../models/assessment_result.dart';
 import '../models/overall_result.dart';
 import '../services/assessment_service.dart';
@@ -25,42 +28,67 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
   Color _resultColor(String result) {
     switch (OverallResult.classify(result)) {
       case OverallResult.excellent:
-        return Colors.green;
+        return AppTheme.primary;
       case OverallResult.good:
-        return Colors.blue;
+        return AppTheme.primary;
       case OverallResult.needsWork:
-        return Colors.orange;
+        return AppTheme.primary;
       case OverallResult.insufficient:
-        return Colors.red;
+        return AppTheme.primary;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text("Grooming Assessment"),
-        backgroundColor: const Color(0xFF1F3D73),
-        foregroundColor: Colors.white,
       ),
 
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           Card(
-            elevation: 2,
             child: ListTile(
-              leading: const Icon(Icons.person),
-              title: Text(widget.participantName),
+              leading: const CircleAvatar(
+                backgroundColor: AppTheme.mutedSurface,
+                child: Icon(Icons.person, color: AppTheme.primary),
+              ),
+              title: Text(
+                widget.participantName,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
               subtitle: Text("Staff ID : ${widget.participantId}"),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
+              ),
             ),
           ),
 
           const SizedBox(height: 20),
 
-          const Text(
-            "AI Assessment Result",
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          Row(
+            children: [
+              Container(
+                width: 4,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: AppTheme.secondary,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                "AI Assessment Result",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.text,
+                ),
+              ),
+            ],
           ),
 
           const SizedBox(height: 20),
@@ -105,9 +133,26 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
 
           const SizedBox(height: 20),
 
-          const Text(
-            "Assessment Details",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          Row(
+            children: [
+              Container(
+                width: 4,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: AppTheme.accent,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                "Assessment Details",
+                style: TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.text,
+                ),
+              ),
+            ],
           ),
 
           const SizedBox(height: 10),
@@ -115,28 +160,33 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
           ...widget.assessmentResult.criteria.map(
             (item) => Card(
               child: ListTile(
-                leading: const Icon(Icons.check_circle_outline),
-
-                title: Text(item.label),
-
+                leading: const CircleAvatar(
+                  backgroundColor: AppTheme.mutedSurface,
+                  child: Icon(
+                    Icons.check_circle_outline,
+                    color: AppTheme.primary,
+                  ),
+                ),
+                title: Text(
+                  item.label,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
                 subtitle: Text(item.tip),
-
                 trailing: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: item.score >= 8
-                        ? Colors.green.shade100
-                        : item.score >= 5
-                        ? Colors.orange.shade100
-                        : Colors.red.shade100,
+                    color: AppTheme.mutedSurface,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     "${item.score}/10",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: AppTheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
@@ -145,11 +195,9 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
 
           const SizedBox(height: 30),
 
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1F3D73),
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 55),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(double.infinity, 54),
             ),
             onPressed: () async {
               final score = widget.assessmentResult.totalScore;
@@ -170,7 +218,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                 messenger.showSnackBar(
                   const SnackBar(
                     content: Text("Failed to save assessment."),
-                    backgroundColor: Colors.red,
+                    backgroundColor: AppTheme.primary,
                   ),
                 );
                 return;
@@ -230,7 +278,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                       ],
                     ),
                     actions: [
-                      ElevatedButton(
+                      FilledButton(
                         onPressed: () {
                           Navigator.pop(context);
                           Navigator.pop(context);

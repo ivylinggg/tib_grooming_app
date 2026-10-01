@@ -155,7 +155,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(content: Text(message), backgroundColor: AppTheme.error),
     );
   }
 
@@ -179,7 +179,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
               const Text(
                 "Create your account to get started.",
-                style: TextStyle(color: Colors.black54),
+                style: TextStyle(color: AppTheme.textMuted),
               ),
 
               const SizedBox(height: 28),
@@ -320,8 +320,8 @@ class _PasswordRequirements extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.black12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.border.withValues(alpha: 0.35)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -366,7 +366,7 @@ class _Requirement extends StatelessWidget {
           Icon(
             met ? Icons.check_circle : Icons.radio_button_unchecked,
             size: 16,
-            color: met ? AppTheme.success : Colors.black38,
+            color: met ? AppTheme.success : AppTheme.textMuted.withValues(alpha: 0.65),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -374,7 +374,7 @@ class _Requirement extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 13,
-                color: met ? Colors.black87 : Colors.black54,
+                color: met ? AppTheme.text : AppTheme.textMuted,
               ),
             ),
           ),

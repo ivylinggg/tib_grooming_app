@@ -19,10 +19,7 @@ class DefaultFirebaseOptions {
 
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for Web.\n'
-        'Run "flutterfire configure" to configure your project.',
-      );
+      return web;
     }
 
     switch (defaultTargetPlatform) {
@@ -30,22 +27,13 @@ class DefaultFirebaseOptions {
         return android;
 
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for iOS.\n'
-          'Run "flutterfire configure".',
-        );
+        return ios;
 
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macOS.\n'
-          'Run "flutterfire configure".',
-        );
+        return macos;
 
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for Windows.\n'
-          'Run "flutterfire configure".',
-        );
+        return windows;
 
       case TargetPlatform.linux:
         throw UnsupportedError(
@@ -64,5 +52,42 @@ class DefaultFirebaseOptions {
     messagingSenderId: '327434489432',
     projectId: 'tib-grooming',
     storageBucket: 'tib-grooming.firebasestorage.app',
+  );
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyAD4-ffEyeuB7zKbv2j-H_HHprFIigKu5Y',
+    appId: '1:327434489432:web:9b028d40a9ac284903842d',
+    messagingSenderId: '327434489432',
+    projectId: 'tib-grooming',
+    authDomain: 'tib-grooming.firebaseapp.com',
+    storageBucket: 'tib-grooming.firebasestorage.app',
+    measurementId: 'G-W9P08PLRJD',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyDc54TJlOKEgcmyUZosmb2VMUFwdoIWf5U',
+    appId: '1:327434489432:ios:746f279cfc120a6103842d',
+    messagingSenderId: '327434489432',
+    projectId: 'tib-grooming',
+    storageBucket: 'tib-grooming.firebasestorage.app',
+    iosBundleId: 'com.example.tibGroomingApp',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyDc54TJlOKEgcmyUZosmb2VMUFwdoIWf5U',
+    appId: '1:327434489432:ios:746f279cfc120a6103842d',
+    messagingSenderId: '327434489432',
+    projectId: 'tib-grooming',
+    storageBucket: 'tib-grooming.firebasestorage.app',
+    iosBundleId: 'com.example.tibGroomingApp',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyAD4-ffEyeuB7zKbv2j-H_HHprFIigKu5Y',
+    appId: '1:327434489432:web:9b028d40a9ac284903842d',
+    messagingSenderId: '327434489432',
+    projectId: 'tib-grooming',
+    authDomain: 'tib-grooming.firebaseapp.com',
+    storageBucket: 'tib-grooming.firebasestorage.app',
+    measurementId: 'G-W9P08PLRJD',
   );
 }

@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
+
 import '../../models/app_user.dart';
 import '../../models/overall_result.dart';
 import '../../services/auth_service.dart';
@@ -155,6 +157,8 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
         return "Admin";
       case UserRole.staff:
         return "Staff";
+      case UserRole.trainer:
+        return "Trainer";
       case UserRole.pending:
         return "Pending (no role assigned yet)";
     }
@@ -163,13 +167,13 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
   Color _resultColor(String result) {
     switch (OverallResult.classify(result)) {
       case OverallResult.excellent:
-        return Colors.green;
+        return AppTheme.success;
       case OverallResult.good:
-        return Colors.blue;
+        return AppTheme.primary;
       case OverallResult.needsWork:
-        return Colors.orange;
+        return AppTheme.warning;
       case OverallResult.insufficient:
-        return Colors.red;
+        return AppTheme.error;
     }
   }
 
@@ -177,16 +181,16 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
   Widget build(BuildContext context) {
     if (_checkingAccess) {
       return const Scaffold(
-        backgroundColor: Color(0xFFF5F7FB),
+        backgroundColor: AppTheme.background,
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text("Staff Profile"),
-        backgroundColor: const Color(0xFF1F3D73),
+        backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
       ),
       body: _buildBody(),
@@ -205,12 +209,12 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const Icon(Icons.error_outline, size: 48, color: AppTheme.error),
               const SizedBox(height: 12),
               Text(
                 _error ?? "Could not load this Staff profile.",
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.red),
+                style: const TextStyle(color: AppTheme.error),
               ),
               const SizedBox(height: 16),
               ElevatedButton(onPressed: _load, child: const Text("Retry")),
@@ -234,7 +238,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
-              decoration: const BoxDecoration(color: Color(0xFF1F3D73)),
+              decoration: const BoxDecoration(color: AppTheme.primary),
               child: Column(
                 children: [
                   CircleAvatar(
@@ -247,7 +251,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                       style: const TextStyle(
                         fontSize: 34,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1F3D73),
+                        color: AppTheme.primary,
                       ),
                     ),
                   ),
@@ -337,7 +341,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                     icon: const Icon(Icons.edit),
                     label: const Text("Edit Staff"),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1F3D73),
+                      backgroundColor: AppTheme.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
@@ -381,7 +385,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
             padding: const EdgeInsets.all(18),
             child: Row(
               children: [
-                const Icon(Icons.groups, color: Color(0xFF1F3D73)),
+                const Icon(Icons.groups, color: AppTheme.primary),
                 const SizedBox(width: 12),
                 Text(
                   "${_handledParticipants.length}",
@@ -410,13 +414,13 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.blueGrey.withValues(alpha: 0.06),
+            color: AppTheme.textMuted.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.blueGrey.withValues(alpha: 0.2)),
+            border: Border.all(color: AppTheme.textMuted.withValues(alpha: 0.2)),
           ),
           child: const Row(
             children: [
-              Icon(Icons.info_outline, color: Colors.blueGrey, size: 20),
+              Icon(Icons.info_outline, color: AppTheme.textMuted, size: 20),
               SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -424,7 +428,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                   "Staff-Participant tracking was added are listed here. "
                   "Earlier activity, if any, was not recorded and cannot "
                   "be reconstructed.",
-                  style: TextStyle(color: Colors.blueGrey, fontSize: 12),
+                  style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
                 ),
               ),
             ],
@@ -439,7 +443,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
             child: Center(
               child: Text(
                 "Historical activity not recorded",
-                style: TextStyle(color: Colors.grey),
+                style: TextStyle(color: AppTheme.textMuted),
               ),
             ),
           )
@@ -461,7 +465,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
               ),
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: const Color(0xFF1F3D73),
+                  backgroundColor: AppTheme.primary,
                   child: Text(
                     name.isNotEmpty ? name[0].toUpperCase() : "?",
                     style: const TextStyle(color: Colors.white),
@@ -518,7 +522,7 @@ class _InfoRow extends StatelessWidget {
             width: 100,
             child: Text(
               label,
-              style: const TextStyle(color: Colors.grey, fontSize: 13),
+              style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
             ),
           ),
           Expanded(
