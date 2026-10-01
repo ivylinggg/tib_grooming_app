@@ -131,7 +131,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             "Camera permission is required to take a photo. "
             "Please enable it in Settings.",
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
           action: SnackBarAction(
             label: "Open Settings",
             textColor: Colors.white,
@@ -147,7 +147,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Camera permission is required to take a photo."),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
       return;
@@ -172,7 +172,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Camera permission is required to take a photo."),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.error,
           ),
         );
         break;
@@ -184,7 +184,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               "Camera permission is required to take a photo. "
               "Please enable it in Settings.",
             ),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.error,
             action: SnackBarAction(
               label: "Open Settings",
               textColor: Colors.white,
@@ -267,7 +267,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(kFullBodyPhotoErrorMessage),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
     }
@@ -289,7 +289,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Please complete all information."),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
       return;
@@ -299,7 +299,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Please upload a reference photo."),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
       return;
@@ -337,7 +337,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       messenger.showSnackBar(
         const SnackBar(
           content: Text(kFullBodyPhotoErrorMessage),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
       return;
@@ -358,7 +358,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (result.success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.green),
+          SnackBar(content: Text(message), backgroundColor: AppTheme.success),
         );
 
         fullNameController.clear();
@@ -371,8 +371,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         });
       } else {
         final color = result.error == RegisterErrorType.duplicateStaffId
-            ? Colors.orange
-            : Colors.red;
+            ? AppTheme.warning
+            : AppTheme.error;
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message), backgroundColor: color),
@@ -384,7 +384,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Registration failed.\n$e"),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
     }
