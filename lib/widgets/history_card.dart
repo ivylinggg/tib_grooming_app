@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_theme.dart';
+
 class HistoryCard extends StatelessWidget {
   const HistoryCard({super.key});
 
@@ -16,12 +18,12 @@ class HistoryCard extends StatelessWidget {
               "PREVIOUS CHECK-INS",
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Colors.grey,
+                color: AppTheme.textMuted,
                 letterSpacing: 1.5,
               ),
             ),
             const SizedBox(width: 10),
-            Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
+            Expanded(child: Divider(color: AppTheme.textMuted.shade300, thickness: 1)),
           ],
         ),
 
@@ -30,9 +32,9 @@ class HistoryCard extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
-            color: const Color(0xFFF9F7F2),
+            color: const AppTheme.mutedSurface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade300),
+            border: Border.all(color: AppTheme.textMuted.shade300),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,7 +46,7 @@ class HistoryCard extends StatelessWidget {
                       "2026-07-27",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1F3D73),
+                        color: AppTheme.primary,
                       ),
                     ),
                   ),
@@ -54,14 +56,14 @@ class HistoryCard extends StatelessWidget {
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFE8A3),
+                      color: const AppTheme.mutedSurface,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
                       "Fail",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF7A4A00),
+                        color: AppTheme.primary,
                       ),
                     ),
                   ),
