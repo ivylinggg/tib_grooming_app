@@ -11,6 +11,13 @@ class AppTheme {
   static const Color background = Color(0xFFF8F6F1);
   static const Color surface = Colors.white;
 
+  // Additional colors for Training History
+  static const Color text = Color(0xFF263238);
+  static const Color textMuted = Color(0xFF757575);
+  static const Color mutedSurface = Color(0xFFF1F3F5);
+  static const Color primaryDark = Color(0xFF14294D);
+  static const Color border = Color(0xFFE0E0E0);
+
   static const Color success = Color(0xFF2ECC71);
   static const Color warning = Color(0xFFF39C12);
   static const Color error = Color(0xFFE74C3C);
